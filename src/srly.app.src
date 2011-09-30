@@ -1,0 +1,3 @@
+{application, srly,
+    [{description, "Erlang serial interface"},
+    {vsn, "0.01"}]}.
