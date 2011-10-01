@@ -37,27 +37,9 @@
 #include <fcntl.h>
 #include <err.h>
 #include <sys/param.h>
-
-#include <sys/types.h>
-#include <netdb.h>
-
-#include <netinet/in.h>
-#include <sys/un.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <net/if.h>
+#include <termios.h>
 
 #include <errno.h>
-
-#include <sys/ioctl.h>
-
-#include <sys/stat.h>
-#include <ctype.h>
-
-#include <sys/uio.h>
-
-#include <termios.h>
-#include <unistd.h>
 
 #define SRLY_VERSION   "0.01"
 
