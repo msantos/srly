@@ -160,7 +160,7 @@ handle_info(Info, State) ->
 terminate(_Reason, #state{fd = FD, port = Port}) ->
     if
         is_port(Port) -> catch erlang:port_close(Port);
-        _ -> ok
+        true -> ok
     end,
     serctl:close(FD),
     ok.
