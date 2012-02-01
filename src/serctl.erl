@@ -1,4 +1,4 @@
-%% Copyright (c) 2011, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2011-2012, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -120,7 +120,7 @@ setattr(FD, Action, Attr) when is_binary(Attr) ->
     tcsetattr(FD, Action, Attr).
 
 
-attr(FD, Opt) when is_integer(FD), is_list(Opt) ->
+attr(FD, Opt) when is_list(Opt) ->
     case tcgetattr(FD) of
         {ok, Attr} ->
             T = termios(Attr),

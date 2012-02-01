@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2011-2012, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -35,11 +35,18 @@
 
 
 static ERL_NIF_TERM error_tuple(ErlNifEnv *env, int errnum);
+void srly_state_free(ErlNifEnv *env, void *obj);
 
 static ERL_NIF_TERM atom_ok;
 static ERL_NIF_TERM atom_error;
 static ERL_NIF_TERM atom_eagain;
 static ERL_NIF_TERM atom_undefined;
+
+static ErlNifResourceType *SRLY_STATE_RESOURCE;
+
+typedef struct _srly_state {
+    int fd;
+} SRLY_STATE;
 
 
     static int
@@ -49,6 +56,11 @@ load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     atom_error = enif_make_atom(env, "error");
     atom_eagain = enif_make_atom(env, "eagain");
     atom_undefined = enif_make_atom(env, "undefined");
+
+    if ( (SRLY_STATE_RESOURCE = enif_open_resource_type(env, NULL,
+        "srly_state_resource", srly_state_free,
+        ERL_NIF_RT_CREATE, NULL)) == NULL)
+        return -1;
 
     return (0);
 }
@@ -62,48 +74,57 @@ unload(ErlNifEnv* env, void *priv_data)
 nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     char buf[MAXPATHLEN];
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
 
 
     if (enif_get_string(env, argv[0], buf, sizeof(buf), ERL_NIF_LATIN1) < 1)
         return (-1);
 
-    fd = open(buf, O_RDWR|O_NOCTTY|O_NONBLOCK);
+    sp = enif_alloc_resource(SRLY_STATE_RESOURCE, sizeof(SRLY_STATE));
+    if (sp == NULL)
+        return error_tuple(env, ENOMEM);
 
-    if (fd < 0)
+    sp->fd = open(buf, O_RDWR|O_NOCTTY|O_NONBLOCK);
+
+    if (sp->fd < 0) {
+        enif_release_resource(sp);
         return error_tuple(env, errno);
+    }
 
     return enif_make_tuple2(env,
             atom_ok,
-            enif_make_int(env, fd));
+            enif_make_resource(env, sp));
 }
 
     static ERL_NIF_TERM
 nif_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
+    ERL_NIF_TERM rv = atom_ok;
 
 
-    if (!enif_get_int(env, argv[0], &fd))
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
-    if (close(fd) < 0)
-        return error_tuple(env, errno);
+    if (close(sp->fd) < 0)
+        rv = error_tuple(env, errno);
 
-    return atom_ok;
+    enif_release_resource(sp);
+
+    return rv;
 }
 
     static ERL_NIF_TERM
 nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
     unsigned long len = 0;
 
     ErlNifBinary buf = {0};
     ssize_t bufsz = 0;
 
 
-    if (!enif_get_int(env, argv[0], &fd))
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
     if (!enif_get_ulong(env, argv[1], &len))
@@ -112,7 +133,7 @@ nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_alloc_binary(len, &buf))
         return error_tuple(env, ENOMEM);
 
-    if ( (bufsz = read(fd, buf.data, buf.size)) == -1) {
+    if ( (bufsz = read(sp->fd, buf.data, buf.size)) == -1) {
         int err = errno;
         enif_release_binary(&buf);
         return error_tuple(env, err);
@@ -129,17 +150,17 @@ nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     static ERL_NIF_TERM
 nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
     ErlNifBinary buf = {0};
 
 
-    if (!enif_get_int(env, argv[0], &fd))
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
     if (!enif_inspect_binary(env, argv[1], &buf))
         return enif_make_badarg(env);
 
-    if (write(fd, buf.data, buf.size) == -1)
+    if (write(sp->fd, buf.data, buf.size) == -1)
         return error_tuple(env, errno);
 
     return atom_ok;
@@ -148,19 +169,19 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     static ERL_NIF_TERM
 nif_tcgetattr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
     ErlNifBinary buf = {0};
 
     int err = 0;
 
 
-    if (!enif_get_int(env, argv[0], &fd))
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
     if (!enif_alloc_binary(sizeof(struct termios), &buf))
         return error_tuple(env, ENOMEM);
 
-    if (tcgetattr(fd, (struct termios *)buf.data) < 0) {
+    if (tcgetattr(sp->fd, (struct termios *)buf.data) < 0) {
         err = errno;
         enif_release_binary(&buf);
         return error_tuple(env, err);
@@ -174,13 +195,13 @@ nif_tcgetattr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     static ERL_NIF_TERM
 nif_tcsetattr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    int fd = -1;
+    SRLY_STATE *sp = NULL;
     int opt = 0;
 
     ErlNifBinary buf = {0};
 
 
-    if (!enif_get_int(env, argv[0], &fd))
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
     if (!enif_get_int(env, argv[1], &opt))
@@ -189,7 +210,7 @@ nif_tcsetattr(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_inspect_binary(env, argv[2], &buf) || (buf.size != sizeof(struct termios)))
         return enif_make_badarg(env);
 
-    if (tcsetattr(fd, opt, (struct termios *)buf.data) < 0)
+    if (tcsetattr(sp->fd, opt, (struct termios *)buf.data) < 0)
         return error_tuple(env, errno);
 
     return atom_ok;
@@ -278,6 +299,18 @@ nif_constant(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     }
 
     return atom_undefined;
+}
+
+    void
+srly_state_free(ErlNifEnv *env, void *obj)
+{
+    SRLY_STATE *p = obj;
+
+    if (p->fd < 0)
+        return;
+
+    (void)close(p->fd);
+    p->fd = -1;
 }
 
     static ERL_NIF_TERM
