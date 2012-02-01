@@ -171,7 +171,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-set_active(FD) ->
+set_active(Res) ->
+    FD = serctl:getfd(Res),
     open_port({fd, FD, FD}, [stream, binary]).
 
 flush_events(Ref, Pid) ->

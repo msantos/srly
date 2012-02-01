@@ -57,6 +57,8 @@
         speed/2,
         setattr/2, setattr/3,
 
+        getfd/1,
+
         offset/2,
         wordalign/1, wordalign/2
     ]).
@@ -105,6 +107,9 @@ constant() ->
     erlang:error(not_implemented).
 
 constant(_) ->
+    erlang:error(not_implemented).
+
+getfd(_) ->
     erlang:error(not_implemented).
 
 

@@ -110,6 +110,7 @@ nif_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         rv = error_tuple(env, errno);
 
     enif_release_resource(sp);
+    sp->fd = -1;
 
     return rv;
 }
@@ -261,6 +262,18 @@ nif_cfsetospeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 }
 
     static ERL_NIF_TERM
+nif_getfd(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    SRLY_STATE *sp = NULL;
+
+
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
+        return enif_make_badarg(env);
+
+    return enif_make_int(env, sp->fd);
+}
+
+    static ERL_NIF_TERM
 nif_constants(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     const struct SERCTL_DEF *p = NULL;
@@ -331,6 +344,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cfsetispeed", 2, nif_cfsetispeed},
     {"cfsetospeed", 2, nif_cfsetospeed},
 
+    {"getfd", 1, nif_getfd},
     {"constant", 0, nif_constants},
     {"constant", 1, nif_constant}
 };
