@@ -16,7 +16,7 @@ start(Opt) ->
 
     {ok,FD} = serctl:open(Dev),
 
-    ok = serctl:mode(FD, raw),
+    ok = serctl:setattr(FD, serctl:mode(raw)),
     ok = serctl:flow(FD, false),
     false = serctl:flow(FD),
     serctl:speed(FD, b9600),
