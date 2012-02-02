@@ -109,8 +109,8 @@ nif_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (close(sp->fd) < 0)
         rv = error_tuple(env, errno);
 
-    enif_release_resource(sp);
     sp->fd = -1;
+    enif_release_resource(sp);
 
     return rv;
 }
