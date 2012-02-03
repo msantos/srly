@@ -136,24 +136,21 @@ converting binaries using serctl:termios/1) include their definition:
         integers. Varies across platforms.
 
 
-serctl has a higher level interface that takes care of portability and
-represents the C data structures as Erlang records:
+serctl has a higher level interface for manipulating the C data structures
+that takes care of portability. The structures are represented as Erlang
+records. These functions do not have side effects and only retrieve or
+set values within the termios structure. To change the serial device,
+the attributes must be written out using serctl:tcsetattr/3.
 
+    serctl:flow(Termios) -> true | false
+    serctl:flow(Termios, Bool) -> #termios{}
 
-    serctl:speed(FD, Speed) -> ok | {error, posix()}
-
-        Types   FD = resource()
-                Speed = integer()
-
-        Sets the input and output speed of the serial device.
-
-    serctl:flow(FD) -> ok | {error, posix()}
-    serctl:flow(FD, Bool) -> ok | {error, posix()}
-
-        Types   FD = resource()
+        Types   Termios = binary() | #termios{}
                 Bool = true | false
 
-        Enables or disables flow control.
+        flow/1 indicates whether flow control is enabled in a serial
+        device's terminal attributes. flow/2 returns a termios structure
+        that can be used for setting a serial device's flow control.
 
     serctl:mode(Mode) -> #termios{}
 
@@ -162,11 +159,55 @@ represents the C data structures as Erlang records:
         Returns an Erlang termios record with attributes that can be
         used to put the serial device into raw mode.
 
-    serctl:setattr(FD, Termios) -> ok | {error, posix()}
+    serctl:getflag(Termios, Flag, Opt) -> true | false
+
+        Types   Termios = binary() | #termios{}
+                Flag = cflag | lflag | iflag | oflag
+                Opt = atom()
+
+        Returns whether a flag is enabled. Opt is one of the atoms
+        returned using serctl:constant/0.
+
+    serctl:setflag(Termios, Opt) -> #termios{}
 
         Types   Termios = #termios{}
+                Opt = [Param]
+                Param = {Flag, [Val]}
+                Flag = cflag | lflag | iflag | oflag
+                Val = {atom(), Bool}
+                Bool = true | false
 
-        Set the serial device attributes.
+        Returns an Erlang termios record which can be used for setting
+        the attributes of a serial device. For example, to create
+        attributes that can be used to enable hardware flow control on
+        a serial device:
+
+            {ok, FD} = serctl:open("/dev/ttyUSB0"),
+            {ok, Termios} = serctl:tcgetattr(FD),
+            Termios1 = serctl:setflag(Termios, [{cflag, [{crtscts, true}]}]),
+            ok = serctl:tcsetattr(FD, tcsanow, Termios1).
+
+    serctl:ispeed(Termios) -> integer()
+    serctl:ispeed(Termios, Speed) -> #termios{}
+    serctl:ospeed(Termios) -> integer()
+    serctl:ospeed(Termios, Speed) -> #termios{}
+
+        Types   Termios = #termios{}
+                Speed = integer()
+
+        ispeed/1 and ospeed/1 return the input and output speed of the
+        serial device. Note the speed returned is the constant defined
+        for the system and may differ between platforms.
+
+        ispeed/2 and ospeed/2 return an Erlang termios record that can be
+        used for setting the input and output speed of the serial device.
+
+    serctl:baud(Speed) -> integer()
+
+        Types   Speed = 115200 | 19200 | 9600 | ...
+
+        Convenience function returning the constant defined for the baud
+        rate for the platform.
 
     serctl:termios(Termios) -> #termios{} | binary()
 
@@ -177,10 +218,6 @@ represents the C data structures as Erlang records:
 
 
 ## TODO
-
-* finalize and document higher level serctl API
-    * should mostly consist of pure functions transforming the termios
-      structure
 
 * document srly
 

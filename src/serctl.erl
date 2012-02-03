@@ -47,15 +47,14 @@
         constant/0, constant/1,
 
         termios/1,
-        ispeed/1, ispeed/2,
-        ospeed/1, ospeed/2,
 
-        attr/2,
+        setflag/2,
         getflag/3,
         flow/1, flow/2,
         mode/1,
-        speed/2,
-        setattr/2, setattr/3,
+        ispeed/1, ispeed/2,
+        ospeed/1, ospeed/2,
+        baud/1,
 
         getfd/1,
 
@@ -140,88 +139,64 @@ getfd(_) ->
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
-setattr(FD, Attr) ->
-    setattr(FD, constant(tcsanow), Attr).
+setflag(Termios, Opt) when is_binary(Termios) ->
+    setflag(termios(Termios), Opt);
+setflag(#termios{
+        cflag = Cflag0,
+        lflag = Lflag0,
+        iflag = Iflag0,
+        oflag = Oflag0
+    } = Termios, Opt) when is_list(Opt) ->
+    Cflag = setflag_1(Cflag0, proplists:get_value(cflag, Opt)),
+    Lflag = setflag_1(Lflag0, proplists:get_value(lflag, Opt)),
+    Iflag = setflag_1(Iflag0, proplists:get_value(iflag, Opt)),
+    Oflag = setflag_1(Oflag0, proplists:get_value(oflag, Opt)),
 
-setattr(FD, Action, #termios{} = Attr) ->
-    setattr(FD, Action, termios(Attr));
-setattr(FD, Action, Attr) when is_binary(Attr) ->
-    tcsetattr(FD, Action, Attr).
+    Termios#termios{
+        cflag = Cflag,
+        lflag = Lflag,
+        iflag = Iflag,
+        oflag = Oflag
+    }.
 
-
-attr(FD, Opt) when is_list(Opt) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            T = termios(Attr),
-            #termios{
-                cflag = Cflag,
-                lflag = Lflag,
-                iflag = Iflag,
-                oflag = Oflag
-            } = T,
-
-            Cflag1 = attr_1(Cflag, proplists:get_value(cflag, Opt)),
-            Lflag1 = attr_1(Lflag, proplists:get_value(lflag, Opt)),
-            Iflag1 = attr_1(Iflag, proplists:get_value(iflag, Opt)),
-            Oflag1 = attr_1(Oflag, proplists:get_value(oflag, Opt)),
-
-            {ok, T#termios{
-                    cflag = Cflag1,
-                    lflag = Lflag1,
-                    iflag = Iflag1,
-                    oflag = Oflag1
-                }};
-        {error, _} = Error ->
-            Error
-    end.
-
-attr_1(Val, undefined) ->
+setflag_1(Val, undefined) ->
     Val;
-attr_1(Val, []) ->
+setflag_1(Val, []) ->
     Val;
-attr_1(Bin, [{Offset, Val}|Rest]) when is_binary(Bin), Offset >= 0, Val >= 0 ->
-    attr_1(offset(Bin, {Offset, Val}), Rest);
-attr_1(Val, [{Key, false}|Rest]) ->
+setflag_1(Bin, [{Offset, Val}|Rest]) when is_binary(Bin), Offset >= 0, Val >= 0 ->
+    setflag_1(offset(Bin, {Offset, Val}), Rest);
+setflag_1(Val, [{Key, false}|Rest]) ->
     Val1 = Val band bnot constant(Key),
-    attr_1(Val1, Rest);
-attr_1(Val, [{Key, true}|Rest]) ->
+    setflag_1(Val1, Rest);
+setflag_1(Val, [{Key, true}|Rest]) ->
     Val1 = Val bor constant(Key),
-    attr_1(Val1, Rest);
-attr_1(Val, [Key|Rest]) when is_atom(Key) ->
-    attr_1(Val, [{Key, true}|Rest]).
+    setflag_1(Val1, Rest);
+setflag_1(Val, [Key|Rest]) when is_atom(Key) ->
+    setflag_1(Val, [{Key, true}|Rest]).
 
 
-getflag(FD, Flag, Opt) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            T = termios(Attr),
-            getflag_1(Flag, Opt, T);
-        {error, _} = Error ->
-            Error
-    end.
+getflag(Termios, Flag, Opt) when is_binary(Termios) ->
+    getflag(termios(Termios), Flag, Opt);
+getflag(#termios{} = Termios, Flag, Opt) ->
+    getflag_1(Termios, Flag, Opt).
 
-getflag_1(cflag, Opt, #termios{cflag = Flag}) ->
-    getflag_2(Opt, Flag);
-getflag_1(lflag, Opt, #termios{lflag = Flag}) ->
-    getflag_2(Opt, Flag);
-getflag_1(iflag, Opt, #termios{iflag = Flag}) ->
-    getflag_2(Opt, Flag);
-getflag_1(oflag, Opt, #termios{oflag = Flag}) ->
-    getflag_2(Opt, Flag).
+getflag_1(#termios{cflag = Flag}, cflag, Opt) ->
+    getflag_2(Flag, Opt);
+getflag_1(#termios{lflag = Flag}, lflag, Opt) ->
+    getflag_2(Flag, Opt);
+getflag_1(#termios{iflag = Flag}, iflag, Opt) ->
+    getflag_2(Flag, Opt);
+getflag_1(#termios{oflag = Flag}, oflag, Opt) ->
+    getflag_2(Flag, Opt).
 
-getflag_2(Opt, Flag) ->
+getflag_2(Flag, Opt) ->
     N = constant(Opt),
     N == Flag band N.
 
-flow(FD) ->
-    getflag(FD, cflag, crtscts).
-flow(FD, Bool) ->
-    case attr(FD, [{cflag, [{crtscts, Bool}]}]) of
-        {ok, Attr} ->
-            setattr(FD, Attr);
-        Error ->
-            Error
-    end.
+flow(Termios) ->
+    getflag(Termios, cflag, crtscts).
+flow(Termios, Bool) when Bool == true; Bool == false ->
+    setflag(Termios, [{cflag, [{crtscts, Bool}]}]).
 
 mode(raw) ->
     #termios{
@@ -243,51 +218,23 @@ mode(raw) ->
         bor constant(cread)
     }.
 
-speed(FD, Speed) when is_integer(Speed) ->
-    speed(FD, list_to_atom("b" ++ integer_to_list(Speed)));
-speed(FD, Speed) when is_atom(Speed) ->
-    speed_1(FD, constant(Speed)).
+ispeed(#termios{ispeed = Speed}) ->
+    Speed.
+ispeed(Termios, Speed) when is_atom(Speed) ->
+    ispeed(Termios, constant(speed));
+ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
+    Termios#termios{ispeed = Speed}.
 
-speed_1(_FD, undefined) ->
-    {error, unsupported};
-speed_1(FD, Speed) ->
-    case {ispeed(FD, Speed), ospeed(FD, Speed)} of
-        {ok, ok} -> ok;
-        {ok, Error} -> Error;
-        {Error, _} -> Error
-    end.
+ospeed(#termios{ospeed = Speed}) ->
+    Speed.
+ospeed(Termios, Speed) when is_atom(Speed) ->
+    ospeed(Termios, constant(Speed));
+ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
+    Termios#termios{ospeed = Speed}.
 
-ispeed(FD) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            #termios{ispeed = Speed} = termios(Attr),
-            Speed;
-        {error, _} = Error ->
-            Error
-    end.
-ispeed(FD, Speed) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            setspeed(FD, cfsetispeed(Attr, Speed));
-        {error, _} = Error ->
-            Error
-    end.
+baud(Speed) when is_integer(Speed) ->
+    constant(list_to_atom("b" ++ integer_to_list(Speed))).
 
-ospeed(FD) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            #termios{ospeed = Speed} = termios(Attr),
-            Speed;
-        {error, _} = Error ->
-            Error
-    end.
-ospeed(FD, Speed) ->
-    case tcgetattr(FD) of
-        {ok, Attr} ->
-            setspeed(FD, cfsetispeed(Attr, Speed));
-        {error, _} = Error ->
-            Error
-    end.
 
 %% Terminal interface structure
 %%
@@ -419,12 +366,6 @@ wordalign(Offset) ->
     wordalign(Offset, erlang:system_info({wordsize, external})).
 wordalign(Offset, Align) ->
     ((Align - (Offset rem Align)) rem Align) * 8.
-
-
-setspeed(FD, {ok, Attr}) ->
-    setattr(FD, Attr);
-setspeed(_FD, Error) ->
-    Error.
 
 
 offset(Cc, {Offset, Val}) when is_binary(Cc) ->

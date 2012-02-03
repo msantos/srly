@@ -16,10 +16,20 @@ start(Opt) ->
 
     {ok,FD} = serctl:open(Dev),
 
-    ok = serctl:setattr(FD, serctl:mode(raw)),
-    ok = serctl:flow(FD, false),
-    false = serctl:flow(FD),
-    serctl:speed(FD, b9600),
+    Termios = lists:foldl(
+        fun(Fun, Acc) -> Fun(Acc) end,
+        serctl:mode(raw),
+        [
+            fun(N) -> serctl:flow(N, false) end,
+            fun(N) -> serctl:ispeed(N, b9600) end,
+            fun(N) -> serctl:ospeed(N, b9600) end
+        ]
+    ),
+
+    ok = serctl:tcsetattr(FD, tcsanow, Termios),
+
+    {ok, Termios1} = serctl:tcgetattr(FD),
+    false = serctl:flow(Termios1),
 
     blink(FD, Interval, lists:seq(0,Leds)).
 
