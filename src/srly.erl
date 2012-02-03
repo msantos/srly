@@ -108,7 +108,7 @@ init([Pid, Dev, Opt]) ->
 
     {ok, FD} = serctl:open(Dev),
 
-    Orig = serctl:tcgetattr(FD),
+    {ok, Orig} = serctl:tcgetattr(FD),
 
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
