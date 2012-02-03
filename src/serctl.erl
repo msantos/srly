@@ -221,7 +221,7 @@ mode(raw) ->
 ispeed(#termios{ispeed = Speed}) ->
     Speed.
 ispeed(Termios, Speed) when is_atom(Speed) ->
-    ispeed(Termios, constant(speed));
+    ispeed(Termios, constant(Speed));
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     Termios#termios{ispeed = Speed}.
 
