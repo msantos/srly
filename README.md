@@ -22,9 +22,8 @@ For a safer, portable native interface, see cereal:
 
 ## USAGE
 
-/serctl/ is the interface to the native system C libraries and follows
-the system C interface. See tcgetattr(3), tcsetattr(3), cfsetispeed(3)
-and cfsetospeed(3) for details.
+_serctl_ is the interface to the native system C libraries and follows
+the system C interface.
 
     serctl:open(Path) -> {ok, FD} | {error, posix()}
 
@@ -57,7 +56,16 @@ and cfsetospeed(3) for details.
         Write data to the serial device.
 
 
-The low level interface to the C library:
+The low level interface follows the C library (see tcgetattr(3),
+tcsetattr(3), cfsetispeed(3) and cfsetospeed(3) for details). For
+convenience, atoms may be used in places where C has defined macros for
+integers and Erlang records can be used as arguments instead of binaries.
+
+To use Erlang records to represent the C struct termios (e.g., when
+converting binaries using serctl:termios/1) include their definition:
+
+    -include("serctl.hrl").
+
 
     serctl:tcgetattr(FD) -> {ok, Termios} | {error, posix()}
 
@@ -67,22 +75,25 @@ The low level interface to the C library:
         Get the terminal attributes of the serial device. Returns the
         contents of the system struct termios as a binary.
 
-    serctl:tcsetattr(FD, Termios) -> ok | {error, posix()}
+    serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix()}
 
         Types   FD = resource()
-                Termios = binary()
+                Action = integer() | Option | Options
+                Options = [Option]
+                Option = tcsanow | tcsadrain | tcsaflush
+                Termios = binary() | #termios{}
 
         Sets the terminal attributes of the serial device.
 
-        /Warning: the contents of Termios are passed directly to
+        _Warning: the contents of Termios are passed directly to
         tcsettr(3). If the system tcsettr(3) does not check if the
         structure is valid, it may cause the library to crash, causing
-        the Erlang VM to crash./
+        the Erlang VM to crash._
 
     serctl:cfsetispeed(Termios, Speed) -> {ok, Termios1} | {error, posix()}
 
-        Types   Termios = binary()
-                Speed = integer()
+        Types   Termios = binary() | #termios{}
+                Speed = integer() | atom()
                 Termios1 = binary()
 
         Set the input speed of the serial device. See the warning for
@@ -90,8 +101,8 @@ The low level interface to the C library:
 
     serctl:cfsetospeed(Termios, Speed) -> {ok, Termios1} | {error, posix()}
 
-        Types   Termios = binary()
-                Speed = integer()
+        Types   Termios = binary() | #termios{}
+                Speed = integer() | atom()
                 Termios1 = binary()
 
         Set the input speed of the serial device. See the warning for
@@ -107,7 +118,7 @@ The low level interface to the C library:
     serctl:constant() -> Constants
     serctl:constant(Attr) -> integer()
 
-        Types   Constants = [{Attr, integer()}|...]
+        Types   Constants = [{Attr, integer()}]
                 Attr = tcsaflush | tcsadrain | tcsanow | tcioflush | tcoflush | tciflush |
                     tcion | tcioff | tcoon | tcooff | iexten | tostop | noflsh | echonl |
                     echoke | echok | echoe | echo | icanon | isig | crtscts | b1152000 |
@@ -127,8 +138,6 @@ The low level interface to the C library:
 
 serctl has a higher level interface that takes care of portability and
 represents the C data structures as Erlang records:
-
-    -include("serctl.hrl").
 
 
     serctl:speed(FD, Speed) -> ok | {error, posix()}

@@ -94,13 +94,37 @@ write(_,_) ->
 tcgetattr(_) ->
     erlang:error(not_implemented).
 
-tcsetattr(_,_,_) ->
+tcsetattr(FD, Action, Termios) when is_list(Action) ->
+    Option = lists:foldl(fun(X,N) -> constant(X) bxor N end, 0, Action),
+    tcsetattr(FD, Option, Termios);
+tcsetattr(FD, Action, Termios) when is_atom(Action) ->
+    tcsetattr(FD, constant(Action), Termios);
+tcsetattr(FD, Action, #termios{} = Termios) ->
+    tcsetattr(FD, Action, termios(Termios));
+tcsetattr(FD, Action, Termios) ->
+    tcsetattr_nif(FD, Action, Termios).
+
+tcsetattr_nif(_,_,_) ->
     erlang:error(not_implemented).
 
-cfsetispeed(_,_) ->
+cfsetispeed(#termios{} = Termios, Speed) ->
+    cfsetispeed(termios(Termios), Speed);
+cfsetispeed(Termios, Speed) when is_atom(Speed) ->
+    cfsetispeed(termios(Termios), constant(Speed));
+cfsetispeed(Termios, Speed) ->
+    cfsetispeed_nif(Termios, Speed).
+
+cfsetispeed_nif(_,_) ->
     erlang:error(not_implemented).
 
-cfsetospeed(_,_) ->
+cfsetospeed(#termios{} = Termios, Speed) ->
+    cfsetospeed(termios(Termios), Speed);
+cfsetospeed(Termios, Speed) when is_atom(Speed) ->
+    cfsetospeed(termios(Termios), constant(Speed));
+cfsetospeed(Termios, Speed) ->
+    cfsetospeed_nif(Termios, Speed).
+
+cfsetospeed_nif(_,_) ->
     erlang:error(not_implemented).
 
 constant() ->

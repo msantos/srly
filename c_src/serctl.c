@@ -340,9 +340,9 @@ static ErlNifFunc nif_funcs[] = {
     {"read", 2, nif_read},
     {"write", 2, nif_write},
     {"tcgetattr", 1, nif_tcgetattr},
-    {"tcsetattr", 3, nif_tcsetattr},
-    {"cfsetispeed", 2, nif_cfsetispeed},
-    {"cfsetospeed", 2, nif_cfsetospeed},
+    {"tcsetattr_nif", 3, nif_tcsetattr},
+    {"cfsetispeed_nif", 2, nif_cfsetispeed},
+    {"cfsetospeed_nif", 2, nif_cfsetospeed},
 
     {"getfd", 1, nif_getfd},
     {"constant", 0, nif_constants},
