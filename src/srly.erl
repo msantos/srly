@@ -106,9 +106,17 @@ init([Pid, Dev, Opt]) ->
     Flow = proplists:get_value(flow, Opt, true),
 
     {ok, FD} = serctl:open(Dev),
-    ok = serctl:setattr(FD, serctl:mode(Mode)),
-    ok = serctl:flow(FD, Flow),
-    ok = serctl:speed(FD, Speed),
+
+    Termios = lists:foldl(
+        fun(Fun, Acc) -> Fun(Acc) end,
+        serctl:mode(Mode),
+        [
+            fun(N) -> serctl:flow(N, Flow) end,
+            fun(N) -> serctl:ispeed(N, Speed) end,
+            fun(N) -> serctl:ospeed(N, Speed) end
+        ]),
+
+    ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
     {ok, #state{
             port = set_active(FD),
