@@ -50,6 +50,7 @@
         terminate/2, code_change/3]).
 
 -record(state, {
+        oattr,      % Original termios attributes
         port,
         pid,        % PID of controlling process
         fd,         % serial dev file descriptor
@@ -107,6 +108,8 @@ init([Pid, Dev, Opt]) ->
 
     {ok, FD} = serctl:open(Dev),
 
+    Orig = serctl:tcgetattr(FD),
+
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
         serctl:mode(Mode),
@@ -119,6 +122,7 @@ init([Pid, Dev, Opt]) ->
     ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
     {ok, #state{
+            oattr = Orig,
             port = set_active(FD),
             pid = Pid,
             fd = FD,
@@ -165,11 +169,12 @@ handle_info(Info, State) ->
     error_logger:error_report([wtf, Info]),
     {noreply, State}.
 
-terminate(_Reason, #state{fd = FD, port = Port}) ->
+terminate(_Reason, #state{fd = FD, port = Port, oattr = Orig}) ->
     if
         is_port(Port) -> catch erlang:port_close(Port);
         true -> ok
     end,
+    serctl:tcsetattr(FD, tcsanow, Orig),
     serctl:close(FD),
     ok.
 
