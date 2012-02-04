@@ -138,9 +138,13 @@ converting binaries using serctl:termios/1) include their definition:
 
 serctl has a higher level interface for manipulating the C data structures
 that takes care of portability. The structures are represented as Erlang
-records. These functions do not have side effects and only retrieve or
-set values within the termios structure. To change the serial device,
-the attributes must be written out using serctl:tcsetattr/3.
+records. These functions only retrieve or modify values within the termios
+structure and do not side effects when used with the record format (when
+binaries are used as arguments, they are first converted to record format
+based on a runtime platform check).
+
+To change the serial device, the attributes must
+be written out using serctl:tcsetattr/3.
 
     serctl:flow(Termios) -> true | false
     serctl:flow(Termios, Bool) -> #termios{}
@@ -188,9 +192,9 @@ the attributes must be written out using serctl:tcsetattr/3.
             ok = serctl:tcsetattr(FD, tcsanow, Termios1).
 
     serctl:ispeed(Termios) -> integer()
-    serctl:ispeed(Termios, Speed) -> #termios{}
+    serctl:ispeed(Termios, Speed) -> #termios{} | binary()
     serctl:ospeed(Termios) -> integer()
-    serctl:ospeed(Termios, Speed) -> #termios{}
+    serctl:ospeed(Termios, Speed) -> #termios{} | binary()
 
         Types   Termios = #termios{}
                 Speed = integer()

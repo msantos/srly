@@ -218,15 +218,25 @@ mode(raw) ->
         bor constant(cread)
     }.
 
+ispeed(Speed) when is_binary(Speed) ->
+    ispeed(termios(Speed));
 ispeed(#termios{ispeed = Speed}) ->
     Speed.
+
+ispeed(Termios, Speed) when is_binary(Termios) ->
+    ispeed(termios(Termios), Speed);
 ispeed(Termios, Speed) when is_atom(Speed) ->
     ispeed(Termios, constant(Speed));
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     Termios#termios{ispeed = Speed}.
 
+ospeed(Speed) when is_binary(Speed) ->
+    ospeed(termios(Speed));
 ospeed(#termios{ospeed = Speed}) ->
     Speed.
+
+ospeed(Termios, Speed) when is_binary(Termios) ->
+    ospeed(termios(Termios), Speed);
 ospeed(Termios, Speed) when is_atom(Speed) ->
     ospeed(Termios, constant(Speed));
 ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
