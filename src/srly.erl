@@ -102,7 +102,6 @@ start_link(Dev, Opt) ->
 init([Pid, Dev, Opt]) ->
     process_flag(trap_exit, true),
 
-    Mode = proplists:get_value(mode, Opt, raw),
     Speed = proplists:get_value(speed, Opt, b9600),
     Flow = proplists:get_value(flow, Opt, true),
 
@@ -110,9 +109,14 @@ init([Pid, Dev, Opt]) ->
 
     {ok, Orig} = serctl:tcgetattr(FD),
 
+    Mode = case proplists:get_value(mode, Opt, raw) of
+        raw -> serctl:mode(raw);
+        none -> Orig
+    end,
+
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
-        serctl:mode(Mode),
+        Mode,
         [
             fun(N) -> serctl:flow(N, Flow) end,
             fun(N) -> serctl:ispeed(N, Speed) end,
