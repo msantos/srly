@@ -104,6 +104,7 @@ init([Pid, Dev, Opt]) ->
 
     Speed = proplists:get_value(speed, Opt, b9600),
     Flow = proplists:get_value(flow, Opt, true),
+    PortOpt = proplists:get_value(port_options, Opt, [stream,binary]),
 
     {ok, FD} = serctl:open(Dev),
 
@@ -127,7 +128,7 @@ init([Pid, Dev, Opt]) ->
 
     {ok, #state{
             oattr = Orig,
-            port = set_active(FD),
+            port = set_active(FD, PortOpt),
             pid = Pid,
             fd = FD,
             dev = Dev
@@ -188,9 +189,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-set_active(Res) ->
+set_active(Res, Opt) ->
     FD = serctl:getfd(Res),
-    open_port({fd, FD, FD}, [stream, binary]).
+    open_port({fd, FD, FD}, Opt).
 
 flush_events(Ref, Pid) ->
     receive
