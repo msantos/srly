@@ -65,11 +65,6 @@ load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     return (0);
 }
 
-    static void
-unload(ErlNifEnv* env, void *priv_data)
-{
-}
-
     static ERL_NIF_TERM
 nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -349,4 +344,4 @@ static ErlNifFunc nif_funcs[] = {
     {"constant", 1, nif_constant}
 };
 
-ERL_NIF_INIT(serctl, nif_funcs, load, NULL, NULL, unload)
+ERL_NIF_INIT(serctl, nif_funcs, load, NULL, NULL, NULL)
