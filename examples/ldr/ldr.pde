@@ -40,23 +40,30 @@ struct {
     int val;
 } buf;
 
-void setup() {
-    int len = sizeof(int);
-    
-    Serial.begin(9600); 
+    void
+setup()
+{
+    Serial.begin(9600);
     pinMode(LDR, INPUT);
-    buf.len = ((len & 0xff) << 8) | ((len & 0xff00) >> 8);
+    buf.len = htons(sizeof(int));
 }
 
-void loop() { 
+    void
+loop()
+{
     if (Serial.available() > 0) {
         inb = Serial.read();
 
         if (inb == '1') {
-            val = analogRead(LDR);
             /* Convert to big endian */
-            buf.val = ((val & 0xff) << 8) | ((val & 0xff00) >> 8);
+            buf.val = htons(analogRead(LDR));
             Serial.write((const uint8_t *)&buf, sizeof(buf));
         }
     }
+}
+
+    int
+htons(int n)
+{
+    return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
