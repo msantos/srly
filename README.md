@@ -16,6 +16,10 @@ For a safer, portable native interface, see cereal:
 
 (At some point, srly may be merged into cereal.)
 
+## WARNING
+
+The serial device must be in non-blocking (raw) mode.
+
 ## COMPILING
 
     make
@@ -219,6 +223,46 @@ be written out using serctl:tcsetattr/3.
 
         Converts between the C struct termios and the Erlang record
         representation.
+
+
+## EXAMPLES
+
+* Connect to an Arduino at 9600
+
+    % Open the serial device
+    {ok, FD} = serctl:open("/dev/ttyUSB0"),
+
+    % Set the terminal attributes to:
+    %   raw, no hardware flow control, 9600
+    Termios = lists:foldl(
+        fun(Fun, Acc) -> Fun(Acc) end,
+        serctl:mode(raw),
+        [
+            fun(N) -> serctl:flow(N, false) end,
+            fun(N) -> serctl:ispeed(N, b9600) end,
+            fun(N) -> serctl:ospeed(N, b9600) end
+        ]
+    ),
+
+    ok = serctl:tcsetattr(FD, tcsanow, Termios),
+
+    % Write 1 byte to the arduino
+    ok = serctl:write(FD, <<1:8>>),
+
+    % Read 2 bytes from the arduino (little-endian integer)
+    {ok, <<Data:2/little-integer-unit:8>>} = serctl:read(FD, 2).
+
+* See the examples directory. The code here is adapted from:
+
+    http://blog.listincomprehension.com/2010/04/accessing-arduino-from-erlang.html
+
+    * examples/strobe
+
+      Serially turn on/off a row of LEDs.
+
+    * examples/ldr
+
+      Read values from an LDR.
 
 
 ## TODO
