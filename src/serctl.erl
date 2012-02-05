@@ -228,7 +228,7 @@ ispeed(Termios, Speed) when is_binary(Termios) ->
 ispeed(Termios, Speed) when is_atom(Speed) ->
     ispeed(Termios, constant(Speed));
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
-    Termios#termios{ispeed = Speed}.
+    termios(cfsetispeed(Termios, Speed)).
 
 ospeed(Speed) when is_binary(Speed) ->
     ospeed(termios(Speed));
@@ -240,7 +240,7 @@ ospeed(Termios, Speed) when is_binary(Termios) ->
 ospeed(Termios, Speed) when is_atom(Speed) ->
     ospeed(Termios, constant(Speed));
 ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
-    Termios#termios{ospeed = Speed}.
+    termios(cfsetospeed(Termios, Speed)).
 
 baud(Speed) when is_integer(Speed) ->
     constant(list_to_atom("b" ++ integer_to_list(Speed))).

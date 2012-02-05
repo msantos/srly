@@ -90,7 +90,7 @@ converting binaries using serctl:termios/1) include their definition:
         structure is valid, it may cause the library to crash, causing
         the Erlang VM to crash._
 
-    serctl:cfsetispeed(Termios, Speed) -> {ok, Termios1} | {error, posix()}
+    serctl:cfsetispeed(Termios, Speed) -> Termios1
 
         Types   Termios = binary() | #termios{}
                 Speed = integer() | atom()
@@ -99,7 +99,7 @@ converting binaries using serctl:termios/1) include their definition:
         Set the input speed of the serial device. See the warning for
         tcsetattr/2.
 
-    serctl:cfsetospeed(Termios, Speed) -> {ok, Termios1} | {error, posix()}
+    serctl:cfsetospeed(Termios, Speed) -> Termios1
 
         Types   Termios = binary() | #termios{}
                 Speed = integer() | atom()

@@ -228,10 +228,9 @@ nif_cfsetispeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_realloc_binary(&buf, buf.size))
         return error_tuple(env, ENOMEM);
 
-    if (cfsetispeed((struct termios *)buf.data, speed) < 0)
-        return error_tuple(env, errno);
+    (void)cfsetispeed((struct termios *)buf.data, speed);
 
-    return enif_make_tuple2(env, atom_ok, enif_make_binary(env, &buf));
+    return enif_make_binary(env, &buf);
 }
 
     static ERL_NIF_TERM
@@ -250,10 +249,9 @@ nif_cfsetospeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_realloc_binary(&buf, buf.size))
         return error_tuple(env, ENOMEM);
 
-    if (cfsetospeed((struct termios *)buf.data, speed) < 0)
-        return error_tuple(env, errno);
+    (void)cfsetospeed((struct termios *)buf.data, speed);
 
-    return enif_make_tuple2(env, atom_ok, enif_make_binary(env, &buf));
+    return enif_make_binary(env, &buf);
 }
 
     static ERL_NIF_TERM
