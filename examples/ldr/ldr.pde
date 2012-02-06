@@ -31,7 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 int LDR = 2;
-int val = 0;
 int inb = 0;
 
 /* sizeof(int) = 2, struct is not padded */
