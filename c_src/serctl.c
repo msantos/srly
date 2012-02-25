@@ -81,9 +81,10 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
     sp->fd = open(buf, O_RDWR|O_NOCTTY|O_NONBLOCK);
 
-    if (sp->fd < 0) {
+    if (sp->fd < 0 || isatty(sp->fd) != 1) {
+        int err = errno;
         enif_release_resource(sp);
-        return error_tuple(env, errno);
+        return error_tuple(env, err);
     }
 
     return enif_make_tuple2(env,
