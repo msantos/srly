@@ -59,6 +59,19 @@ the system C interface.
 
         Write data to the serial device.
 
+    serctl:ioctl(FD, Request, In) -> {ok, Out} | {error, posix()}
+
+        Types   FD = resource()
+                Request = ulong()
+                In = binary()
+                Out = binary()
+
+        Perform operations controlling the serial device.
+
+        The In argument is a binary holding the input parameter to the
+        device request. The Out parameter will hold the result of the
+        request if the ioctl is in/out.
+
 
 The low level interface follows the C library (see tcgetattr(3),
 tcsetattr(3), cfsetispeed(3) and cfsetospeed(3) for details). For
@@ -251,6 +264,37 @@ be written out using serctl:tcsetattr/3.
     
         % Read 2 bytes from the arduino (little-endian integer)
         {ok, <<Data:2/little-integer-unit:8>>} = serctl:read(FD, 2).
+
+* Resetting DTR/RTS
+
+        % ioctl request values for Linux
+        TIOCMGET = 16#5415,
+        TIOCMSET = 16#5418,
+        TIOCM_DTR = 16#002,
+        TIOCM_RTS = 16#004,
+
+        % Get the currrent device settings
+        {ok, <<Ctl:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
+            FD,
+            TIOCMGET,
+            <<0:32>>
+        ),
+
+        Off = Ctl band bnot ( TIOCM_DTR bor TIOCM_RTS ),
+
+        {ok, <<Ctl1:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
+            FD,
+            TIOCMSET,
+            <<Off:4/native-unsigned-integer-unit:8>>
+        ),
+
+        On = Ctl1 bor ( TIOCM_DTR bor TIOCM_RTS ),
+
+        serctl:ioctl(
+            FD,
+            TIOCMSET,
+            <<On:4/native-unsigned-integer-unit:8>>
+        ).
 
 * See the examples directory. The code here is adapted from:
 
