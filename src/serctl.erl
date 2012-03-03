@@ -44,6 +44,8 @@
         cfsetispeed/2,
         cfsetospeed/2,
 
+        ioctl/3,
+
         constant/0, constant/1,
 
         termios/1,
@@ -124,6 +126,9 @@ cfsetospeed(Termios, Speed) ->
     cfsetospeed_nif(Termios, Speed).
 
 cfsetospeed_nif(_,_) ->
+    erlang:error(not_implemented).
+
+ioctl(_,_,_) ->
     erlang:error(not_implemented).
 
 constant() ->

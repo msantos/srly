@@ -38,6 +38,7 @@
 #include <err.h>
 #include <sys/param.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 #include <errno.h>
 

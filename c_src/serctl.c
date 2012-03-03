@@ -256,6 +256,35 @@ nif_cfsetospeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 }
 
     static ERL_NIF_TERM
+nif_ioctl(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    SRLY_STATE *sp = NULL;
+    unsigned long req = 0;
+    ErlNifBinary arg = {0};
+
+
+    if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
+        return enif_make_badarg(env);
+
+    if (!enif_get_ulong(env, argv[1], &req))
+        return enif_make_badarg(env);
+
+    if (!enif_inspect_binary(env, argv[2], &arg))
+        return enif_make_badarg(env);
+
+    /* Make the binary mutable for in/out args */
+    if (!enif_realloc_binary(&arg, arg.size))
+        return error_tuple(env, ENOMEM);
+
+    if (ioctl(sp->fd, req, arg.data) < 0)
+        return error_tuple(env, errno);
+
+    return enif_make_tuple2(env,
+        atom_ok,
+        enif_make_binary(env, &arg));
+}
+
+    static ERL_NIF_TERM
 nif_getfd(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     SRLY_STATE *sp = NULL;
@@ -337,6 +366,8 @@ static ErlNifFunc nif_funcs[] = {
     {"tcsetattr_nif", 3, nif_tcsetattr},
     {"cfsetispeed_nif", 2, nif_cfsetispeed},
     {"cfsetospeed_nif", 2, nif_cfsetospeed},
+
+    {"ioctl", 3, nif_ioctl},
 
     {"getfd", 1, nif_getfd},
     {"constant", 0, nif_constants},
