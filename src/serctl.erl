@@ -293,10 +293,10 @@ baud(Speed) when is_integer(Speed) ->
 %%         speed_t     c_ospeed;   /* output speed */
 %% };
 termios(<<
-    Iflag:?UINT32,          % input mode flags
-    Oflag:?UINT32,          % output mode flags
-    Cflag:?UINT32,          % control mode flags
-    Lflag:?UINT32,          % local mode flags
+    ?UINT32(Iflag),          % input mode flags
+    ?UINT32(Oflag),          % output mode flags
+    ?UINT32(Cflag),          % control mode flags
+    ?UINT32(Lflag),          % local mode flags
     Rest/binary>>) ->
 
     LineSz = case os() of
@@ -314,8 +314,8 @@ termios(<<
     Pad = wordalign(LineSz div 8 + NCCS, 4),
     <<
     _:Pad,
-    Ispeed:?UINT32,         % input speed
-    Ospeed:?UINT32          % output speed
+    ?UINT32(Ispeed),         % input speed
+    ?UINT32(Ospeed)          % output speed
     >> = Rest1,
     #termios{
         iflag = Iflag,
@@ -352,15 +352,15 @@ termios(#termios{
 
     Pad = wordalign(LineSz div 8 + NCCS, 4),
     <<
-    Iflag:?UINT32,
-    Oflag:?UINT32,
-    Cflag:?UINT32,
-    Lflag:?UINT32,
+    ?UINT32(Iflag),
+    ?UINT32(Oflag),
+    ?UINT32(Cflag),
+    ?UINT32(Lflag),
     Line:LineSz,
     Cc1/binary,
     0:Pad,
-    Ispeed:?UINT32,
-    Ospeed:?UINT32
+    ?UINT32(Ispeed),
+    ?UINT32(Ospeed)
     >>.
 
 
