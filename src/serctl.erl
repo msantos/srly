@@ -38,6 +38,8 @@
         read/2,
         write/2,
 
+        readx/2, readx/3,
+
         tcgetattr/1,
         tcsetattr/3,
 
@@ -144,6 +146,22 @@ getfd(_) ->
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
+readx(FD, N) ->
+    readx(FD, N, infinity).
+
+readx(FD, N, Timeout) ->
+    Self = self(),
+    Pid = spawn(fun() -> poll(FD, N, Self) end),
+    receive
+        Any ->
+            Any
+    after
+        Timeout ->
+            exit(Pid, kill),
+            {error, eintr}
+    end.
+
+
 setflag(Termios, Opt) when is_binary(Termios) ->
     setflag(termios(Termios), Opt);
 setflag(#termios{
@@ -404,4 +422,24 @@ os() ->
         {unix, linux} -> linux;
         {unix, freebsd} -> bsd;
         {unix, darwin} -> bsd
+    end.
+
+
+poll(FD, N, Pid) ->
+    poll(FD, N, N, Pid, []).
+poll(FD, Total, N, Pid, Acc) ->
+    Size = iolist_size(Acc),
+    case read(FD, N) of
+        {ok, Buf} when byte_size(Buf) == Total ->
+            Pid ! {ok, Buf};
+        {ok, Buf} when byte_size(Buf) + Size == Total ->
+            Pid ! {ok, iolist_to_binary(lists:reverse([Buf|Acc]))};
+        {ok, Buf} ->
+            poll(FD, Total, N-byte_size(Buf), Pid, [Buf|Acc]);
+        {error, eagain} ->
+            timer:sleep(10),
+            poll(FD, Total, N, Pid, Acc);
+        {error, Error} ->
+            % XXX throw away away buffered data
+            Pid ! {error, Error}
     end.

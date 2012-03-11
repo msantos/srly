@@ -52,6 +52,25 @@ the system C interface.
 
         Read from the serial device. Size is an unsigned long.
 
+    serctl:readx(FD, Size) -> {ok, Data} | {error, posix()}
+    serctl:readx(FD, Size, Timeout) -> {ok, Data} | {error, posix()}
+
+        Types   FD = resource()
+                Size = integer()
+                Data = binary()
+                Timeout = infinity | integer()
+
+        Read exactly Size bytes from the serial device. readx/2 will
+        block forever.
+
+        readx/3 accepts a timeout value. The behaviour of readx/3 when
+        the timeout is reached is to throw away any buffered data and
+        return {error, eintr} to the caller, e.g., the caller will not
+        be returned the contents of a partial read. (The justification
+        for this behaviour: the caller has stated they require a fixed
+        number of bytes so the contents of a partial read represents
+        unspecified behaviour.)
+
     serctl:write(FD, Data) -> ok | {error, posix()}
 
         Types   FD = resource()
