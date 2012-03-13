@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Michael Santos <michael.santos@gmail.com>
+ * Copyright (c) 2011-2012, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,8 @@
 #define SRLY_VERSION   "0.01"
 
 struct SERCTL_DEF {
-    const char  *key;
-    u_int32_t     val;
+    const char *key;
+    u_int32_t val;
 };
 
 const struct SERCTL_DEF serctl_const[] = {

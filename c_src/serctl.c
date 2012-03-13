@@ -130,7 +130,7 @@ nif_read(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_alloc_binary(len, &buf))
         return error_tuple(env, ENOMEM);
 
-    if ( (bufsz = read(sp->fd, buf.data, buf.size)) == -1) {
+    if ( (bufsz = read(sp->fd, buf.data, buf.size)) < 0) {
         int err = errno;
         enif_release_binary(&buf);
         return error_tuple(env, err);
@@ -157,7 +157,7 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_inspect_binary(env, argv[1], &buf))
         return enif_make_badarg(env);
 
-    if (write(sp->fd, buf.data, buf.size) == -1)
+    if (write(sp->fd, buf.data, buf.size) < 0)
         return error_tuple(env, errno);
 
     return atom_ok;
