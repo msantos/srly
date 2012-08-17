@@ -62,7 +62,7 @@ load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
         ERL_NIF_RT_CREATE, NULL)) == NULL)
         return -1;
 
-    return (0);
+    return 0;
 }
 
     static ERL_NIF_TERM
@@ -73,7 +73,7 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
     if (enif_get_string(env, argv[0], buf, sizeof(buf), ERL_NIF_LATIN1) < 1)
-        return (-1);
+        return enif_make_badarg(env);
 
     sp = enif_alloc_resource(SRLY_STATE_RESOURCE, sizeof(SRLY_STATE));
     if (sp == NULL)
@@ -86,6 +86,27 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         enif_release_resource(sp);
         return error_tuple(env, err);
     }
+
+    return enif_make_tuple2(env,
+            atom_ok,
+            enif_make_resource(env, sp));
+}
+
+    static ERL_NIF_TERM
+nif_fdopen(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+    int fd = 0;
+    SRLY_STATE *sp = NULL;
+
+
+    if (!enif_get_int(env, argv[0], &fd))
+        return enif_make_badarg(env);
+
+    sp = enif_alloc_resource(SRLY_STATE_RESOURCE, sizeof(SRLY_STATE));
+    if (sp == NULL)
+        return error_tuple(env, ENOMEM);
+
+    sp->fd = fd;
 
     return enif_make_tuple2(env,
             atom_ok,
@@ -358,7 +379,8 @@ error_tuple(ErlNifEnv *env, int errnum)
 
 
 static ErlNifFunc nif_funcs[] = {
-    {"open", 1, nif_open},
+    {"open_nif", 1, nif_open},
+    {"fdopen", 1, nif_fdopen},
     {"close", 1, nif_close},
     {"read", 2, nif_read},
     {"write", 2, nif_write},

@@ -31,10 +31,13 @@ the system C interface.
 
     serctl:open(Path) -> {ok, FD} | {error, posix()}
 
-        Types   Path = list()
+        Types   Path = list() | {fd, FD}
                 FD = resource()
 
         Opens the serial device (e.g., "/dev/ttyUSB0").
+
+        A previously opened file descriptor can also be used. The fd
+        should be opened with the O_NONBLOCK|O_NOCTTY flags.
 
     serctl:close(FD) -> ok | {error, posix()}
 

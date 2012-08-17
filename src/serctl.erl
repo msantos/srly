@@ -82,7 +82,15 @@ init() ->
 on_load() ->
     erlang:load_nif(progname(), []).
 
-open(_) ->
+open({fd, FD}) ->
+    fdopen(FD);
+open(Dev) ->
+    open_nif(Dev).
+
+open_nif(_) ->
+    erlang:error(not_implemented).
+
+fdopen(_) ->
     erlang:error(not_implemented).
 
 close(_) ->
