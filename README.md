@@ -124,10 +124,10 @@ converting binaries using serctl:termios/1) include their definition:
 
         Sets the terminal attributes of the serial device.
 
-        _Warning: the contents of Termios are passed directly to
-        tcsettr(3). If the system tcsettr(3) does not check if the
-        structure is valid, it may cause the library to crash, causing
-        the Erlang VM to crash._
+        Warning: the contents of Termios are passed directly to
+        tcsettr(3). If the system tcsettr(3) does not perform any
+        validation of the structure, it's possible the Erlang VM will
+        crash.
 
     serctl:cfsetispeed(Termios, Speed) -> Termios1
 
@@ -182,8 +182,8 @@ structure and do not have side effects when used with the record format
 (when binaries are used as arguments, they are first converted to record
 format based on a runtime platform check).
 
-To change the serial device, the attributes must
-be written out using serctl:tcsetattr/3.
+To modify the serial device, the attributes must be written out using
+serctl:tcsetattr/3.
 
     serctl:flow(Termios) -> true | false
     serctl:flow(Termios, Bool) -> #termios{}
@@ -266,7 +266,7 @@ be written out using serctl:tcsetattr/3.
 
         % Open the serial device
         {ok, FD} = serctl:open("/dev/ttyUSB0"),
-    
+
         % Set the terminal attributes to:
         %   raw, no hardware flow control, 9600
         Termios = lists:foldl(
@@ -278,12 +278,12 @@ be written out using serctl:tcsetattr/3.
                 fun(N) -> serctl:ospeed(N, b9600) end
             ]
         ),
-    
+
         ok = serctl:tcsetattr(FD, tcsanow, Termios),
-    
+
         % Write 1 byte to the arduino
         ok = serctl:write(FD, <<1:8>>),
-    
+
         % Read 2 bytes from the arduino (little-endian integer)
         {ok, <<Data:2/little-integer-unit:8>>} = serctl:read(FD, 2).
 

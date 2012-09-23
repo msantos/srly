@@ -294,7 +294,7 @@ baud(Speed) when is_integer(Speed) ->
 %% Linux:
 %% #define NCCS 32
 %% struct termios
-%%   { 
+%%   {
 %%           tcflag_t c_iflag;       /* input mode flags */
 %%           tcflag_t c_oflag;       /* output mode flags */
 %%           tcflag_t c_cflag;       /* control mode flags */

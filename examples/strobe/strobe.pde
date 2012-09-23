@@ -55,7 +55,7 @@ void loop() {
             inb -= '0';
 #endif /* DEBUG */
 
-        for (val = 0; val <= LPIN - FPIN; val++) 
+        for (val = 0; val <= LPIN - FPIN; val++)
             digitalWrite(val + FPIN, ( (inb & (1 << val)) ? HIGH : LOW));
     }
 }
