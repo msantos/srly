@@ -170,6 +170,9 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     SRLY_STATE *sp = NULL;
     ErlNifBinary buf = {0};
+    ssize_t n = -1;
+
+    ERL_NIF_TERM rv = atom_ok;
 
 
     if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
@@ -178,10 +181,16 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_inspect_binary(env, argv[1], &buf))
         return enif_make_badarg(env);
 
-    if (write(sp->fd, buf.data, buf.size) < 0)
-        return error_tuple(env, errno);
+    n = write(sp->fd, buf.data, buf.size);
 
-    return atom_ok;
+    if (n < 0)
+        rv = error_tuple(env, errno);
+    else if (n != buf.size)
+        rv = enif_make_tuple2(env,
+            atom_ok,
+            enif_make_long(env, n));
+
+    return rv;
 }
 
     static ERL_NIF_TERM

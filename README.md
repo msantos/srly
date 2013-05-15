@@ -74,12 +74,16 @@ the system C interface.
         number of bytes so the contents of a partial read represents
         unspecified behaviour.)
 
-    serctl:write(FD, Data) -> ok | {error, posix()}
+    serctl:write(FD, Data) -> ok | {ok, NBytes} | {error, posix()}
 
         Types   FD = resource()
                 Data = binary()
+                NBytes = long()
 
         Write data to the serial device.
+
+        In the unlikely case of a successful partial write, the number
+        of bytes written is returned.
 
     serctl:ioctl(FD, Request, In) -> {ok, Out} | {error, posix()}
 
