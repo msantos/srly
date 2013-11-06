@@ -68,11 +68,11 @@ open(Dev, Opt) ->
     start_link(Dev, Opt).
 
 close(Ref) when is_pid(Ref) ->
-    gen_server:call(Ref, close).
+    gen_server:call(Ref, close, infinity).
 
 
 getfd(Ref) when is_pid(Ref) ->
-    gen_server:call(Ref, fd).
+    gen_server:call(Ref, fd, infinity).
 
 
 read(FD, Len) when is_integer(Len) ->
@@ -82,12 +82,12 @@ write(FD, Data) when is_binary(Data) ->
     serctl:write(FD, Data).
 
 send(Ref, Data) when is_pid(Ref) ->
-    gen_server:call(Ref, {send, Data}).
+    gen_server:call(Ref, {send, Data}, infinity).
 
 % FIXME: race condition: events can be delivered out of order
 controlling_process(Ref, Pid) when is_pid(Ref), is_pid(Pid) ->
     flush_events(Ref, Pid),
-    gen_server:call(Ref, {controlling_process, Pid}),
+    gen_server:call(Ref, {controlling_process, Pid}, infinity),
     flush_events(Ref, Pid).
 
 
