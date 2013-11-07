@@ -86,7 +86,6 @@ send(Ref, Data) when is_pid(Ref) ->
 
 % FIXME: race condition: events can be delivered out of order
 controlling_process(Ref, Pid) when is_pid(Ref), is_pid(Pid) ->
-    flush_events(Ref, Pid),
     gen_server:call(Ref, {controlling_process, Pid}, infinity),
     flush_events(Ref, Pid).
 
@@ -156,6 +155,8 @@ handle_call(close, _From, State) ->
     {stop, normal, ok, State};
 
 handle_call({controlling_process, Pid}, {Owner,_}, #state{pid = Owner} = State) ->
+    link(Pid),
+    unlink(Owner),
     {reply, ok, State#state{pid = Pid}}.
 
 
