@@ -88,22 +88,22 @@ open(Dev) ->
     open_nif(Dev).
 
 open_nif(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 fdopen(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 close(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 read(_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 write(_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 tcgetattr(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 tcsetattr(FD, Action, Termios) when is_list(Action) ->
     Option = lists:foldl(fun(X,N) -> constant(X) bxor N end, 0, Action),
@@ -116,7 +116,7 @@ tcsetattr(FD, Action, Termios) ->
     tcsetattr_nif(FD, Action, Termios).
 
 tcsetattr_nif(_,_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 cfsetispeed(#termios{} = Termios, Speed) ->
     cfsetispeed(termios(Termios), Speed);
@@ -126,7 +126,7 @@ cfsetispeed(Termios, Speed) ->
     cfsetispeed_nif(Termios, Speed).
 
 cfsetispeed_nif(_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 cfsetospeed(#termios{} = Termios, Speed) ->
     cfsetospeed(termios(Termios), Speed);
@@ -136,19 +136,19 @@ cfsetospeed(Termios, Speed) ->
     cfsetospeed_nif(Termios, Speed).
 
 cfsetospeed_nif(_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 ioctl(_,_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 constant() ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 constant(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 getfd(_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
 
 %%--------------------------------------------------------------------
