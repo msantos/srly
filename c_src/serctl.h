@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2013, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2011-2014, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -166,6 +166,22 @@ const struct SERCTL_DEF serctl_const[] = {
     {"tcsanow", TCSANOW},
     {"tcsadrain", TCSADRAIN},
     {"tcsaflush", TCSAFLUSH},
+
+#ifdef TIOCMBIC
+    {"tiocmbic", TIOCMBIC},
+#endif
+#ifdef TIOCMBIS
+    {"tiocmbis", TIOCMBIS},
+#endif
+#ifdef TIOCMGET
+    {"tiocmget", TIOCMGET},
+#endif
+#ifdef TIOCM_DTR
+    {"tiocm_dtr", TIOCM_DTR},
+#endif
+#ifdef TIOCM_RTS
+    {"tiocm_rts", TIOCM_RTS},
+#endif
 
     {NULL, 0}
 };
