@@ -68,18 +68,22 @@ load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
     static ERL_NIF_TERM
 nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-    char buf[MAXPATHLEN];
+    ErlNifBinary dev;
     SRLY_STATE *sp = NULL;
 
-
-    if (enif_get_string(env, argv[0], buf, sizeof(buf), ERL_NIF_LATIN1) < 1)
+    if (!enif_inspect_iolist_as_binary(env, argv[0], (ErlNifBinary *)&dev))
         return enif_make_badarg(env);
 
     sp = enif_alloc_resource(SRLY_STATE_RESOURCE, sizeof(SRLY_STATE));
     if (sp == NULL)
         return error_tuple(env, ENOMEM);
 
-    sp->fd = open(buf, O_RDWR|O_NOCTTY|O_NONBLOCK);
+    if (!enif_realloc_binary(&dev, dev.size+1))
+        return enif_make_badarg(env);
+
+    dev.data[dev.size-1] = '\0';
+
+    sp->fd = open((char *)dev.data, O_RDWR|O_NOCTTY|O_NONBLOCK);
 
     if (sp->fd < 0 || isatty(sp->fd) != 1) {
         int err = errno;

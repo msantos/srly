@@ -31,7 +31,7 @@ the system C interface.
 
     serctl:open(Path) -> {ok, FD} | {error, posix()}
 
-        Types   Path = list() | {fd, FD}
+        Types   Path = iodata() | {fd, FD}
                 FD = resource()
 
         Opens the serial device (e.g., "/dev/ttyUSB0").
