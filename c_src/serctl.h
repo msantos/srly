@@ -86,7 +86,9 @@ const struct SERCTL_DEF serctl_const[] = {
     {"ixany", IXANY},
     {"ixoff", IXOFF},
     {"imaxbel", IMAXBEL},
+#ifdef IUTF8
     {"iutf8", IUTF8},
+#endif
     {"opost", OPOST},
 #ifdef OLCUC
     {"olcuc", OLCUC},
@@ -95,8 +97,12 @@ const struct SERCTL_DEF serctl_const[] = {
     {"ocrnl", OCRNL},
     {"onocr", ONOCR},
     {"onlret", ONLRET},
+#ifdef OFILL
     {"ofill", OFILL},
+#endif
+#ifdef OFDEL
     {"ofdel", OFDEL},
+#endif
     {"b0", B0},
     {"b50", B50},
     {"b75", B75},
