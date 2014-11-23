@@ -182,7 +182,7 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
 
-    if (!enif_inspect_binary(env, argv[1], &buf))
+    if (!enif_inspect_iolist_as_binary(env, argv[1], (ErlNifBinary *)&buf))
         return enif_make_badarg(env);
 
     n = write(sp->fd, buf.data, buf.size);
