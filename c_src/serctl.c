@@ -106,6 +106,9 @@ nif_fdopen(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_get_int(env, argv[0], &fd))
         return enif_make_badarg(env);
 
+    if (fd < 0)
+        return error_tuple(env, EINVAL);
+
     sp = enif_alloc_resource(SRLY_STATE_RESOURCE, sizeof(SRLY_STATE));
     if (sp == NULL)
         return error_tuple(env, ENOMEM);
