@@ -69,6 +69,12 @@
         init/0
     ]).
 
+-type fd() :: any().
+-type dev() :: iodata() | {'fd',integer()}.
+-type errno() :: {'error',file:posix()}.
+-type termios() :: #termios{} | binary().
+
+-export_type([fd/0,dev/0,errno/0,termios/0]).
 
 -on_load(on_load/0).
 
@@ -82,6 +88,7 @@ init() ->
 on_load() ->
     erlang:load_nif(progname(), []).
 
+-spec open(dev()) -> {'ok',fd()} | errno().
 open({fd, FD}) ->
     fdopen(FD);
 open(Dev) ->
@@ -93,18 +100,23 @@ open_nif(_) ->
 fdopen(_) ->
     erlang:nif_error(not_implemented).
 
+-spec close(fd()) -> {'ok',fd()} | errno().
 close(_) ->
     erlang:nif_error(not_implemented).
 
+-spec read(fd(),non_neg_integer()) -> {'ok',binary()} | errno().
 read(_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec write(fd(),iodata()) -> 'ok' | {'ok',non_neg_integer()} | errno().
 write(_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec tcgetattr(fd()) -> {'ok',binary()} | errno().
 tcgetattr(_) ->
     erlang:nif_error(not_implemented).
 
+-spec tcsetattr(fd(),[atom()] | atom() | integer(), termios()) -> 'ok' | errno().
 tcsetattr(FD, Action, Termios) when is_list(Action) ->
     Option = lists:foldl(fun(X,N) -> constant(X) bxor N end, 0, Action),
     tcsetattr(FD, Option, Termios);
@@ -118,6 +130,7 @@ tcsetattr(FD, Action, Termios) ->
 tcsetattr_nif(_,_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec cfsetispeed(termios(), atom() | integer()) -> binary() | errno().
 cfsetispeed(#termios{} = Termios, Speed) ->
     cfsetispeed(termios(Termios), Speed);
 cfsetispeed(Termios, Speed) when is_atom(Speed) ->
@@ -128,6 +141,7 @@ cfsetispeed(Termios, Speed) ->
 cfsetispeed_nif(_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec cfsetospeed(termios(), atom() | integer()) -> binary() | errno().
 cfsetospeed(#termios{} = Termios, Speed) ->
     cfsetospeed(termios(Termios), Speed);
 cfsetospeed(Termios, Speed) when is_atom(Speed) ->
@@ -138,15 +152,19 @@ cfsetospeed(Termios, Speed) ->
 cfsetospeed_nif(_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec ioctl(fd(),integer(),binary()) -> {'ok',binary()} | errno().
 ioctl(_,_,_) ->
     erlang:nif_error(not_implemented).
 
+-spec constant() -> proplists:proplist().
 constant() ->
     erlang:nif_error(not_implemented).
 
+-spec constant(atom()) -> integer().
 constant(_) ->
     erlang:nif_error(not_implemented).
 
+-spec getfd(fd()) -> integer().
 getfd(_) ->
     erlang:nif_error(not_implemented).
 
