@@ -130,7 +130,7 @@ tcsetattr(FD, Action, Termios) ->
 tcsetattr_nif(_,_,_) ->
     erlang:nif_error(not_implemented).
 
--spec cfsetispeed(termios(), atom() | integer()) -> binary() | errno().
+-spec cfsetispeed(termios(), atom() | integer()) -> binary().
 cfsetispeed(#termios{} = Termios, Speed) ->
     cfsetispeed(termios(Termios), Speed);
 cfsetispeed(Termios, Speed) when is_atom(Speed) ->
@@ -141,7 +141,7 @@ cfsetispeed(Termios, Speed) ->
 cfsetispeed_nif(_,_) ->
     erlang:nif_error(not_implemented).
 
--spec cfsetospeed(termios(), atom() | integer()) -> binary() | errno().
+-spec cfsetospeed(termios(), atom() | integer()) -> binary().
 cfsetospeed(#termios{} = Termios, Speed) ->
     cfsetospeed(termios(Termios), Speed);
 cfsetospeed(Termios, Speed) when is_atom(Speed) ->

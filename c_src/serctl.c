@@ -264,7 +264,7 @@ nif_cfsetispeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
 
     if (!enif_realloc_binary(&buf, buf.size))
-        return error_tuple(env, ENOMEM);
+        return enif_make_badarg(env);
 
     (void)cfsetispeed((struct termios *)buf.data, speed);
 
@@ -285,7 +285,7 @@ nif_cfsetospeed(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         return enif_make_badarg(env);
 
     if (!enif_realloc_binary(&buf, buf.size))
-        return error_tuple(env, ENOMEM);
+        return enif_make_badarg(env);
 
     (void)cfsetospeed((struct termios *)buf.data, speed);
 
