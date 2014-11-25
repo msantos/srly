@@ -447,7 +447,9 @@ os() ->
     case os:type() of
         {unix, linux} -> linux;
         {unix, freebsd} -> bsd;
-        {unix, darwin} -> bsd
+        {unix, darwin} -> bsd;
+        {unix, netbsd} -> bsd;
+        {unix, openbsd} -> bsd
     end.
 
 
