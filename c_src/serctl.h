@@ -41,7 +41,12 @@
 
 #include <errno.h>
 
-#define SRLY_VERSION   "0.01"
+#if defined(__SVR4) && defined(__sun)
+#define u_int8_t    uint8_t
+#define u_int16_t   uint16_t
+#define u_int32_t   uint32_t
+#define u_int64_t   uint64_t
+#endif
 
 struct SERCTL_DEF {
     const char *key;
