@@ -179,8 +179,8 @@ readx(FD, N, Timeout) ->
     Self = self(),
     Pid = spawn(fun() -> poll(FD, N, Self) end),
     receive
-        Any ->
-            Any
+        {serctl_poll, Reply} ->
+            Reply
     after
         Timeout ->
             exit(Pid, kill),
@@ -459,9 +459,9 @@ poll(FD, Total, N, Pid, Acc) ->
     Size = iolist_size(Acc),
     case read(FD, N) of
         {ok, Buf} when byte_size(Buf) == Total ->
-            Pid ! {ok, Buf};
+            Pid ! {serctl_poll, {ok, Buf}};
         {ok, Buf} when byte_size(Buf) + Size == Total ->
-            Pid ! {ok, iolist_to_binary(lists:reverse([Buf|Acc]))};
+            Pid ! {serctl_poll, {ok, iolist_to_binary(lists:reverse([Buf|Acc]))}};
         {ok, Buf} ->
             poll(FD, Total, N-byte_size(Buf), Pid, [Buf|Acc]);
         {error, eagain} ->
@@ -469,5 +469,5 @@ poll(FD, Total, N, Pid, Acc) ->
             poll(FD, Total, N, Pid, Acc);
         {error, Error} ->
             % XXX throw away away buffered data
-            Pid ! {error, Error}
+            Pid ! {serctl_poll, {error, Error}}
     end.
