@@ -172,9 +172,11 @@ getfd(_) ->
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
+-spec readx(fd(),timeout()) -> {'ok',binary()} | errno().
 readx(FD, N) ->
     readx(FD, N, infinity).
 
+-spec readx(fd(),non_neg_integer(),timeout()) -> {'ok',binary()} | errno().
 readx(FD, N, Timeout) ->
     Self = self(),
     Pid = spawn(fun() -> poll(FD, N, Self) end),
@@ -188,6 +190,7 @@ readx(FD, N, Timeout) ->
     end.
 
 
+-spec setflag(binary() | #termios{},proplists:proplist()) -> #termios{}.
 setflag(Termios, Opt) when is_binary(Termios) ->
     setflag(termios(Termios), Opt);
 setflag(#termios{
@@ -224,6 +227,7 @@ setflag_1(Val, [Key|Rest]) when is_atom(Key) ->
     setflag_1(Val, [{Key, true}|Rest]).
 
 
+-spec getflag(binary() | #termios{},'cflag' | 'iflag' | 'lflag' | 'oflag',atom()) -> boolean().
 getflag(Termios, Flag, Opt) when is_binary(Termios) ->
     getflag(termios(Termios), Flag, Opt);
 getflag(#termios{} = Termios, Flag, Opt) ->
@@ -242,8 +246,11 @@ getflag_2(Flag, Opt) ->
     N = constant(Opt),
     N == Flag band N.
 
+-spec flow(binary() | #termios{}) -> boolean().
 flow(Termios) ->
     getflag(Termios, cflag, crtscts).
+
+-spec flow(binary() | #termios{},boolean()) -> #termios{}.
 flow(Termios, Bool) when Bool == true; Bool == false ->
     setflag(Termios, [{cflag, [{crtscts, Bool}]}]).
 
@@ -267,11 +274,13 @@ mode(raw) ->
         bor constant(cread)
     }.
 
+-spec ispeed(binary() | #termios{}) -> non_neg_integer().
 ispeed(Speed) when is_binary(Speed) ->
     ispeed(termios(Speed));
 ispeed(#termios{ispeed = Speed}) ->
     Speed.
 
+-spec ispeed(binary() | #termios{},atom() | integer()) -> binary() | #termios{}.
 ispeed(Termios, Speed) when is_binary(Termios) ->
     ispeed(termios(Termios), Speed);
 ispeed(Termios, Speed) when is_atom(Speed) ->
@@ -279,11 +288,13 @@ ispeed(Termios, Speed) when is_atom(Speed) ->
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetispeed(Termios, Speed)).
 
+-spec ospeed(binary() | #termios{}) -> non_neg_integer().
 ospeed(Speed) when is_binary(Speed) ->
     ospeed(termios(Speed));
 ospeed(#termios{ospeed = Speed}) ->
     Speed.
 
+-spec ospeed(binary() | #termios{},atom() | integer()) -> binary() | #termios{}.
 ospeed(Termios, Speed) when is_binary(Termios) ->
     ospeed(termios(Termios), Speed);
 ospeed(Termios, Speed) when is_atom(Speed) ->
@@ -336,6 +347,7 @@ baud(Speed) when is_integer(Speed) ->
 %%         speed_t     c_ispeed;   /* input speed */
 %%         speed_t     c_ospeed;   /* output speed */
 %% };
+-spec termios(binary() | #termios{}) -> binary() | #termios{}.
 termios(<<
     ?UINT32(Iflag),          % input mode flags
     ?UINT32(Oflag),          % output mode flags
@@ -411,6 +423,7 @@ termios(#termios{
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+-spec progname() -> binary() | string().
 progname() ->
     filename:join([
             filename:dirname(code:which(?MODULE)),
@@ -419,13 +432,11 @@ progname() ->
             ?MODULE
         ]).
 
-
 % Return pad size in bits
 wordalign(Offset) ->
     wordalign(Offset, erlang:system_info({wordsize, external})).
 wordalign(Offset, Align) ->
     ((Align - (Offset rem Align)) rem Align) * 8.
-
 
 offset(Cc, {Offset, Val}) when is_binary(Cc) ->
     tuple_to_binary(
@@ -436,12 +447,10 @@ offset(Cc, {Offset, Val}) when is_binary(Cc) ->
         )
     ).
 
-
 binary_to_tuple(N) when is_binary(N) ->
     list_to_tuple(binary_to_list(N)).
 tuple_to_binary(N) when is_tuple(N) ->
     list_to_binary(tuple_to_list(N)).
-
 
 os() ->
     case os:type() of
@@ -451,7 +460,6 @@ os() ->
         {unix, netbsd} -> bsd;
         {unix, openbsd} -> bsd
     end.
-
 
 poll(FD, N, Pid) ->
     poll(FD, N, N, Pid, []).
