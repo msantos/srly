@@ -18,6 +18,9 @@ clean: $(REBAR)
 deps: $(REBAR)
 	@$(REBAR) get-deps
 
+test: $(REBAR) compile
+	@$(REBAR) eunit
+
 .PHONY: test dialyzer typer clean distclean
 
 $(DEPSOLVER_PLT):
