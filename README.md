@@ -10,11 +10,7 @@ low level control of the serial device, at the expense of portability
 must be looked up at runtime) and safety (if the native system C interface
 can be crashed by passing in arbitrary data as arguments).
 
-For a safer, portable native interface, see cereal:
-
-    https://github.com/joewilliams/cereal
-
-(At some point, srly may be merged into cereal.)
+Stable version: 0.4.5
 
 ## WARNING
 
