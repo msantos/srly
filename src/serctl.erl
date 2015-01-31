@@ -336,7 +336,7 @@ baud(Speed) when is_integer(Speed) ->
 %%  #define _HAVE_STRUCT_TERMIOS_C_OSPEED 1
 %%  };
 %%
-%% BSD (Max OS X, FreeBSD):
+%% BSD (Max OS X, FreeBSD, OpenBSD, NetBSD, ...):
 %% #define NCCS 20
 %% struct termios {
 %%         tcflag_t    c_iflag;    /* input flags */
@@ -346,6 +346,16 @@ baud(Speed) when is_integer(Speed) ->
 %%         cc_t        c_cc[NCCS]; /* control chars */
 %%         speed_t     c_ispeed;   /* input speed */
 %%         speed_t     c_ospeed;   /* output speed */
+%% };
+%%
+%% Solaris:
+%% #define NCCS    19
+%% struct termios {
+%%         tcflag_t    c_iflag;    /* input modes */
+%%         tcflag_t    c_oflag;    /* output modes */
+%%         tcflag_t    c_cflag;    /* control modes */
+%%         tcflag_t    c_lflag;    /* line discipline modes */
+%%         cc_t        c_cc[NCCS]; /* control chars */
 %% };
 -spec termios(binary() | #termios{}) -> binary() | #termios{}.
 termios(<<
@@ -357,7 +367,8 @@ termios(<<
 
     LineSz = case os() of
         linux -> 8;
-        bsd -> 0
+        bsd -> 0;
+        sunos -> 0
     end,
 
     NCCS = constant(nccs),
@@ -367,22 +378,34 @@ termios(<<
     Rest1/binary
     >> = Rest,
 
-    Pad = wordalign(LineSz div 8 + NCCS, 4),
-    <<
-    _:Pad,
-    ?UINT32(Ispeed),         % input speed
-    ?UINT32(Ospeed)          % output speed
-    >> = Rest1,
-    #termios{
-        iflag = Iflag,
-        oflag = Oflag,
-        cflag = Cflag,
-        lflag = Lflag,
-        line = Line,
-        cc = Cc,
-        ispeed = Ispeed,
-        ospeed = Ospeed
-    };
+    case os() of
+        sunos ->
+            #termios{
+                iflag = Iflag,
+                oflag = Oflag,
+                cflag = Cflag,
+                lflag = Lflag,
+                line = Line,
+                cc = Cc
+            };
+        _ ->
+            Pad = wordalign(LineSz div 8 + NCCS, 4),
+            <<
+            _:Pad,
+            ?UINT32(Ispeed),         % input speed
+            ?UINT32(Ospeed)          % output speed
+            >> = Rest1,
+            #termios{
+                iflag = Iflag,
+                oflag = Oflag,
+                cflag = Cflag,
+                lflag = Lflag,
+                line = Line,
+                cc = Cc,
+                ispeed = Ispeed,
+                ospeed = Ospeed
+            }
+    end;
 termios(#termios{
         iflag = Iflag,
         oflag = Oflag,
@@ -396,7 +419,8 @@ termios(#termios{
 
     LineSz = case os() of
         linux -> 8;
-        bsd -> 0
+        bsd -> 0;
+        sunos -> 0
     end,
 
     NCCS = constant(nccs),
@@ -407,18 +431,30 @@ termios(#termios{
     end,
 
     Pad = wordalign(LineSz div 8 + NCCS, 4),
-    <<
-    ?UINT32(Iflag),
-    ?UINT32(Oflag),
-    ?UINT32(Cflag),
-    ?UINT32(Lflag),
-    Line:LineSz,
-    Cc1/binary,
-    0:Pad,
-    ?UINT32(Ispeed),
-    ?UINT32(Ospeed)
-    >>.
 
+    case os() of
+        sunos ->
+            <<
+            ?UINT32(Iflag),
+            ?UINT32(Oflag),
+            ?UINT32(Cflag),
+            ?UINT32(Lflag),
+            Cc1/binary,
+            0:Pad
+            >>;
+        _ ->
+            <<
+            ?UINT32(Iflag),
+            ?UINT32(Oflag),
+            ?UINT32(Cflag),
+            ?UINT32(Lflag),
+            Line:LineSz,
+            Cc1/binary,
+            0:Pad,
+            ?UINT32(Ispeed),
+            ?UINT32(Ospeed)
+            >>
+    end.
 
 %%--------------------------------------------------------------------
 %%% Internal functions
@@ -458,7 +494,8 @@ os() ->
         {unix, freebsd} -> bsd;
         {unix, darwin} -> bsd;
         {unix, netbsd} -> bsd;
-        {unix, openbsd} -> bsd
+        {unix, openbsd} -> bsd;
+        {unix, sunos} -> sunos
     end.
 
 poll(FD, N, Pid) ->

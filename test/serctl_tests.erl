@@ -43,7 +43,8 @@ run(State) ->
         mode(State),
         ispeed(State),
         ospeed(State),
-        baud(State)
+        baud(State),
+        termios(State)
     ].
 
 getfd(#state{fd = FD}) ->
@@ -74,3 +75,8 @@ baud(#state{}) ->
         _ ->
             []
     end.
+
+termios(#state{}) ->
+    Mode = serctl:mode(raw),
+    Bin = serctl:termios(Mode),
+    ?_assertEqual(Mode, serctl:termios(Bin)).
