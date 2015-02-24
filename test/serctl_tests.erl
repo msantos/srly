@@ -14,18 +14,18 @@ constant_test() ->
     [ V = serctl:constant(K) || {K,V} <- serctl:constant() ].
 
 serctl_test_() ->
-    case os:getenv("SRLY_TEST_PORT") of
-        false ->
-            [];
-        _ ->
-            {setup,
-                fun start/0,
-                fun stop/1,
-                fun run/1}
-    end.
+    {setup,
+        fun start/0,
+        fun stop/1,
+        fun run/1}.
 
 start() ->
-    Dev = os:getenv("SRLY_TEST_PORT"),
+    Dev = case os:getenv("SRLY_TEST_PORT") of
+        false ->
+            "/dev/tty";
+        TTY ->
+            TTY
+    end,
     {ok, FD} = serctl:open(Dev),
     {ok, Termios} = serctl:tcgetattr(FD),
     #state{
