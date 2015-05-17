@@ -3,18 +3,10 @@ on Mac OS X, FreeBSD and Linux.
 
 The C component of srly simply provides a wrapper to the system serial
 interface. Data structures used as arguments to the native C functions
-(such as struct termios) are provided as Erlang binaries. This allows
-low level control of the serial device, at the expense of portability
-(termios and structure alignment vary across platforms), performance
-(due to portability, for some operations, the layout of the data structure
-must be looked up at runtime) and safety (if the native system C interface
-can be crashed by passing in arbitrary data as arguments).
+(such as struct termios) are provided as Erlang binaries, allowing
+low level control of the serial device.
 
-Stable version: 0.4.5
-
-## WARNING
-
-The serial device must be in non-blocking (raw) mode.
+Stable version: 0.4.6
 
 ## COMPILING
 
@@ -336,3 +328,6 @@ serctl:tcsetattr/3.
 * document srly
 
 * test if the system C interface can actually be crashed!
+
+* srly should be a well behaved OTP application that can deal with the
+  addition and removal of USB serial ports
