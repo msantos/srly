@@ -178,10 +178,11 @@ readx(FD, N) ->
 
 -spec readx(fd(),non_neg_integer(),timeout()) -> {'ok',binary()} | errno().
 readx(FD, N, Timeout) ->
+    Ref = make_ref(),
     Self = self(),
-    Pid = spawn(fun() -> poll(FD, N, Self) end),
+    Pid = spawn(fun() -> poll(Ref, FD, N, Self) end),
     receive
-        {serctl_poll, Reply} ->
+        {Ref, Reply} ->
             Reply
     after
         Timeout ->
@@ -498,21 +499,21 @@ os() ->
         {unix, sunos} -> sunos
     end.
 
-poll(FD, N, Pid) ->
-    poll(FD, N, N, Pid, []).
-poll(FD, Total, N, Pid, Acc) ->
+poll(Ref, FD, N, Pid) ->
+    poll(Ref, FD, N, N, Pid, []).
+poll(Ref, FD, Total, N, Pid, Acc) ->
     Size = iolist_size(Acc),
     case read(FD, N) of
         {ok, Buf} when byte_size(Buf) == Total ->
-            Pid ! {serctl_poll, {ok, Buf}};
+            Pid ! {Ref, {ok, Buf}};
         {ok, Buf} when byte_size(Buf) + Size == Total ->
-            Pid ! {serctl_poll, {ok, iolist_to_binary(lists:reverse([Buf|Acc]))}};
+            Pid ! {Ref, {ok, iolist_to_binary(lists:reverse([Buf|Acc]))}};
         {ok, Buf} ->
-            poll(FD, Total, N-byte_size(Buf), Pid, [Buf|Acc]);
+            poll(Ref, FD, Total, N-byte_size(Buf), Pid, [Buf|Acc]);
         {error, eagain} ->
             timer:sleep(10),
-            poll(FD, Total, N, Pid, Acc);
+            poll(Ref, FD, Total, N, Pid, Acc);
         {error, Error} ->
             % XXX throw away away buffered data
-            Pid ! {serctl_poll, {error, Error}}
+            Pid ! {Ref, {error, Error}}
     end.
