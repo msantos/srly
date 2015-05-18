@@ -187,6 +187,9 @@ const struct SERCTL_DEF serctl_const[] = {
 #ifdef TIOCMGET
     {"tiocmget", TIOCMGET},
 #endif
+#ifdef TIOCMSET
+    {"tiocmset", TIOCMSET},
+#endif
 #ifdef TIOCM_DTR
     {"tiocm_dtr", TIOCM_DTR},
 #endif
