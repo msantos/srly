@@ -339,6 +339,10 @@ baud(Speed) when is_integer(Speed) ->
 %%
 %% BSD (Max OS X, FreeBSD, OpenBSD, NetBSD, ...):
 %% #define NCCS 20
+%% typedef unsigned int    tcflag_t;
+%% typedef unsigned char   cc_t;
+%% typedef unsigned int    speed_t;
+%%
 %% struct termios {
 %%         tcflag_t    c_iflag;    /* input flags */
 %%         tcflag_t    c_oflag;    /* output flags */
@@ -348,6 +352,11 @@ baud(Speed) when is_integer(Speed) ->
 %%         speed_t     c_ispeed;   /* input speed */
 %%         speed_t     c_ospeed;   /* output speed */
 %% };
+%%
+%% On 64-bit Mac OS X:
+%%
+%% typedef unsigned long long   user_tcflag_t;
+%% typedef unsigned long long   user_speed_t;
 %%
 %% Solaris:
 %% #define NCCS    19
@@ -359,54 +368,115 @@ baud(Speed) when is_integer(Speed) ->
 %%         cc_t        c_cc[NCCS]; /* control chars */
 %% };
 -spec termios(binary() | #termios{}) -> binary() | #termios{}.
+termios(Termios) ->
+    termios(Termios, os:type(), erlang:system_info({wordsize, external})).
+
 termios(<<
     ?UINT32(Iflag),          % input mode flags
     ?UINT32(Oflag),          % output mode flags
     ?UINT32(Cflag),          % control mode flags
     ?UINT32(Lflag),          % local mode flags
-    Rest/binary>>) ->
-
-    LineSz = case os() of
-        linux -> 8;
-        bsd -> 0;
-        sunos -> 0
-    end,
+    Rest/binary>>, {unix,linux}, _) ->
 
     NCCS = constant(nccs),
     <<
-    Line:LineSz,            % line discipline
+    Line:8,                 % line discipline
     Cc:NCCS/bytes,          % control characters
     Rest1/binary
     >> = Rest,
 
-    case os() of
-        sunos ->
-            #termios{
-                iflag = Iflag,
-                oflag = Oflag,
-                cflag = Cflag,
-                lflag = Lflag,
-                line = Line,
-                cc = Cc
-            };
-        _ ->
-            Pad = wordalign(LineSz div 8 + NCCS, 4),
-            <<
-            _:Pad,
-            ?UINT32(Ispeed),         % input speed
-            ?UINT32(Ospeed)          % output speed
-            >> = Rest1,
-            #termios{
-                iflag = Iflag,
-                oflag = Oflag,
-                cflag = Cflag,
-                lflag = Lflag,
-                line = Line,
-                cc = Cc,
-                ispeed = Ispeed,
-                ospeed = Ospeed
-            }
-    end;
+    Pad = wordalign(1 + NCCS, 4),
+    <<
+    _:Pad,
+    ?UINT32(Ispeed),         % input speed
+    ?UINT32(Ospeed)          % output speed
+    >> = Rest1,
+    #termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        line = Line,
+        cc = Cc,
+        ispeed = Ispeed,
+        ospeed = Ospeed
+    };
+termios(<<
+    ?UINT32(Iflag),          % input mode flags
+    ?UINT32(Oflag),          % output mode flags
+    ?UINT32(Cflag),          % control mode flags
+    ?UINT32(Lflag),          % local mode flags
+    Rest/binary>>, {unix,sunos}, _) ->
+
+    NCCS = constant(nccs),
+    <<
+    Cc:NCCS/bytes,          % control characters
+    _/binary
+    >> = Rest,
+
+    #termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc
+    };
+termios(<<
+    ?UINT64(Iflag),          % input mode flags
+    ?UINT64(Oflag),          % output mode flags
+    ?UINT64(Cflag),          % control mode flags
+    ?UINT64(Lflag),          % local mode flags
+    Rest/binary>>, {unix,darwin}, 8) ->
+
+    NCCS = constant(nccs),
+    <<
+    Cc:NCCS/bytes,          % control characters
+    Rest1/binary
+    >> = Rest,
+
+    Pad = wordalign(NCCS, 8),
+    <<
+    _:Pad,
+    ?UINT64(Ispeed),         % input speed
+    ?UINT64(Ospeed)          % output speed
+    >> = Rest1,
+    #termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc,
+        ispeed = Ispeed,
+        ospeed = Ospeed
+    };
+termios(<<
+    ?UINT32(Iflag),          % input mode flags
+    ?UINT32(Oflag),          % output mode flags
+    ?UINT32(Cflag),          % control mode flags
+    ?UINT32(Lflag),          % local mode flags
+    Rest/binary>>, {unix,_}, _) ->
+
+    NCCS = constant(nccs),
+    <<
+    Cc:NCCS/bytes,          % control characters
+    Rest1/binary
+    >> = Rest,
+
+    Pad = wordalign(NCCS, 4),
+    <<
+    _:Pad,
+    ?UINT32(Ispeed),         % input speed
+    ?UINT32(Ospeed)          % output speed
+    >> = Rest1,
+    #termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc,
+        ispeed = Ispeed,
+        ospeed = Ospeed
+    };
 termios(#termios{
         iflag = Iflag,
         oflag = Oflag,
@@ -416,14 +486,7 @@ termios(#termios{
         cc = Cc,
         ispeed = Ispeed,
         ospeed = Ospeed
-    }) ->
-
-    LineSz = case os() of
-        linux -> 8;
-        bsd -> 0;
-        sunos -> 0
-    end,
-
+    }, {unix,linux}, _) ->
     NCCS = constant(nccs),
 
     Cc1 = case Cc of
@@ -431,31 +494,99 @@ termios(#termios{
         _ -> Cc
     end,
 
-    Pad = wordalign(LineSz div 8 + NCCS, 4),
+    Pad = wordalign(1 + NCCS, 4),
 
-    case os() of
-        sunos ->
-            <<
-            ?UINT32(Iflag),
-            ?UINT32(Oflag),
-            ?UINT32(Cflag),
-            ?UINT32(Lflag),
-            Cc1/binary,
-            0:Pad
-            >>;
-        _ ->
-            <<
-            ?UINT32(Iflag),
-            ?UINT32(Oflag),
-            ?UINT32(Cflag),
-            ?UINT32(Lflag),
-            Line:LineSz,
-            Cc1/binary,
-            0:Pad,
-            ?UINT32(Ispeed),
-            ?UINT32(Ospeed)
-            >>
-    end.
+    <<
+    ?UINT32(Iflag),
+    ?UINT32(Oflag),
+    ?UINT32(Cflag),
+    ?UINT32(Lflag),
+    Line:8,
+    Cc1/binary,
+    0:Pad,
+    ?UINT32(Ispeed),
+    ?UINT32(Ospeed)
+    >>;
+termios(#termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc
+    }, {unix,sunos}, _) ->
+    NCCS = constant(nccs),
+
+    Cc1 = case Cc of
+        <<>> -> <<0:(NCCS*8)>>;
+        _ -> Cc
+    end,
+
+    Pad = wordalign(NCCS, 4),
+
+    <<
+    ?UINT32(Iflag),
+    ?UINT32(Oflag),
+    ?UINT32(Cflag),
+    ?UINT32(Lflag),
+    Cc1/binary,
+    0:Pad
+    >>;
+termios(#termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc,
+        ispeed = Ispeed,
+        ospeed = Ospeed
+    }, {unix,darwin}, 8) ->
+    NCCS = constant(nccs),
+
+    Cc1 = case Cc of
+        <<>> -> <<0:(NCCS*8)>>;
+        _ -> Cc
+    end,
+
+    Pad = wordalign(NCCS, 8),
+
+    <<
+    ?UINT64(Iflag),
+    ?UINT64(Oflag),
+    ?UINT64(Cflag),
+    ?UINT64(Lflag),
+    Cc1/binary,
+    0:Pad,
+    ?UINT64(Ispeed),
+    ?UINT64(Ospeed)
+    >>;
+termios(#termios{
+        iflag = Iflag,
+        oflag = Oflag,
+        cflag = Cflag,
+        lflag = Lflag,
+        cc = Cc,
+        ispeed = Ispeed,
+        ospeed = Ospeed
+    }, {unix,_}, _) ->
+    NCCS = constant(nccs),
+
+    Cc1 = case Cc of
+        <<>> -> <<0:(NCCS*8)>>;
+        _ -> Cc
+    end,
+
+    Pad = wordalign(NCCS, 4),
+
+    <<
+    ?UINT32(Iflag),
+    ?UINT32(Oflag),
+    ?UINT32(Cflag),
+    ?UINT32(Lflag),
+    Cc1/binary,
+    0:Pad,
+    ?UINT32(Ispeed),
+    ?UINT32(Ospeed)
+    >>.
 
 %%--------------------------------------------------------------------
 %%% Internal functions
@@ -488,16 +619,6 @@ binary_to_tuple(N) when is_binary(N) ->
     list_to_tuple(binary_to_list(N)).
 tuple_to_binary(N) when is_tuple(N) ->
     list_to_binary(tuple_to_list(N)).
-
-os() ->
-    case os:type() of
-        {unix, linux} -> linux;
-        {unix, freebsd} -> bsd;
-        {unix, darwin} -> bsd;
-        {unix, netbsd} -> bsd;
-        {unix, openbsd} -> bsd;
-        {unix, sunos} -> sunos
-    end.
 
 poll(Ref, FD, N, Pid) ->
     poll(Ref, FD, N, N, Pid, []).
