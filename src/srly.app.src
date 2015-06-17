@@ -1,6 +1,6 @@
 {application, srly,
     [{description, "Erlang serial interface"},
-    {vsn, "0.4.5"},
+    {vsn, "0.4.7"},
     {registered, [srly]},
     {applications, [kernel, stdlib]}
     ]}.

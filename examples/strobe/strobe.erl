@@ -59,7 +59,6 @@ start(Opt) ->
     ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
     {ok, Termios1} = serctl:tcgetattr(FD),
-    false = serctl:flow(Termios1),
 
     blink(FD, Interval, lists:seq(0,Leds)).
 
