@@ -150,18 +150,22 @@ converting binaries using serctl:termios/1) include their definition:
     serctl:constant(Attr) -> integer()
 
         Types   Constants = [{Attr, integer()}]
-                Attr = tcsaflush | tcsadrain | tcsanow | tcioflush | tcoflush | tciflush |
-                    tcion | tcioff | tcoon | tcooff | iexten | tostop | noflsh | echonl |
-                    echoke | echok | echoe | echo | icanon | isig | crtscts | b1152000 |
-                    b1000000 | b921600 | b576000 | b500000 | b460800 | b230400 | b115200 |
-                    b57600 | clocal | hupcl | parodd | parenb | cread | cstopb | cs8 | cs7 | cs6 |
-                    cs5 | csize | b38400 | b19200 | b9600 | b4800 | b2400 | b1800 | b1200 | b600 |
-                    b300 | b200 | b150 | b134 | b110 | b75 | b50 | b0 | ofdel | ofill | onlret |
-                    onocr | ocrnl | onlcr | olcuc | opost | iutf8 | imaxbel | ixoff | ixany |
-                    ixon | iuclc | icrnl | igncr | inlcr | istrip | inpck | parmrk | ignpar |
-                    brkint | ignbrk | veol2 | vlnext | vwerase | vdiscard | vreprint | veol |
-                    vsusp | vstop | vstart | vswtc | vmin | vtime | veof | vkill | verase | vquit |
-                    vintr | nccs
+                Attr = tiocm_rts | tiocm_dtr | tiocmset | tiocmget | tiocmbis
+                | tiocmbic | tcsaflush | tcsadrain | tcsanow | tcioflush
+                | tcoflush | tciflush | tcion | tcioff | tcoon | tcooff
+                | iexten | tostop | noflsh | echonl | echoke | echok | echoe
+                | echo | icanon | isig | crtscts | b1152000 | b1000000
+                | b921600 | b576000 | b500000 | b460800 | b230400 | b115200
+                | b57600 | clocal | hupcl | parodd | parenb | cread | cstopb
+                | cs8 | cs7 | cs6 | cs5 | csize | b38400 | b19200 | b9600
+                | b4800 | b2400 | b1800 | b1200 | b600 | b300 | b200 | b150
+                | b134 | b110 | b75 | b50 | b0 | ofdel | ofill | onlret
+                | onocr | ocrnl | onlcr | olcuc | opost | iutf8 | imaxbel
+                | ixoff | ixany | ixon | iuclc | icrnl | igncr | inlcr
+                | istrip | inpck | parmrk | ignpar | brkint | ignbrk | veol2
+                | vlnext | vwerase | vdiscard | vreprint | veol | vsusp | vstop
+                | vstart | vswtc | vmin | vtime | veof | vkill | verase | vquit
+                | vintr | nccs
 
         Map of atoms reprsenting terminal attribute constants to
         integers. Varies across platforms.
@@ -281,11 +285,10 @@ serctl:tcsetattr/3.
 
 * Resetting DTR/RTS
 
-        % ioctl request values for Linux
-        TIOCMGET = 16#5415,
-        TIOCMSET = 16#5418,
-        TIOCM_DTR = 16#002,
-        TIOCM_RTS = 16#004,
+        TIOCMGET = serctl:constant(tiocmget),
+        TIOCMSET = serctl:constant(tiocmset),
+        TIOCM_DTR = serctl:constant(tiocm_dtr),
+        TIOCM_RTS = serctl:constant(tiocm_rts),
 
         % Get the currrent device settings
         {ok, <<Ctl:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
