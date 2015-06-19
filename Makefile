@@ -28,7 +28,7 @@ $(DEPSOLVER_PLT):
 		--apps erts kernel stdlib crypto
 
 dialyzer: $(DEPSOLVER_PLT)
-	@dialyzer --plt $(DEPSOLVER_PLT) -Wrace_conditions --src src examples/*
+	@dialyzer $(DIALYZER_FLAGS) --plt $(DEPSOLVER_PLT) -Wrace_conditions --src src examples/*
 
 typer: $(DEPSOLVER_PLT)
 	@typer -I include --plt $(DEPSOLVER_PLT) -r ./src
