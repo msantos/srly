@@ -188,7 +188,7 @@ ioctl(_,_,_) ->
 constant() ->
     erlang:nif_error(not_implemented).
 
--spec constant(atom()) -> integer().
+-spec constant(atom()) -> integer() | 'undefined'.
 constant(_) ->
     erlang:nif_error(not_implemented).
 

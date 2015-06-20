@@ -6,7 +6,7 @@ interface. Data structures used as arguments to the native C functions
 (such as struct termios) are provided as Erlang binaries, allowing
 low level control of the serial device.
 
-Stable version: 0.5.0
+Stable version: 0.5.1
 
 ## COMPILING
 
@@ -151,7 +151,7 @@ converting binaries using serctl:termios/1) include their definition:
         file descriptor can be used with erlang:open_port/2.
 
     serctl:constant() -> Constants
-    serctl:constant(Attr) -> integer()
+    serctl:constant(Attr) -> integer() | undefined
 
         Types   Constants = [{Attr, integer()}]
                 Attr = tiocm_rts | tiocm_dtr | tiocmset | tiocmget | tiocmbis
