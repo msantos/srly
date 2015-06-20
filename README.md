@@ -6,7 +6,7 @@ interface. Data structures used as arguments to the native C functions
 (such as struct termios) are provided as Erlang binaries, allowing
 low level control of the serial device.
 
-Stable version: 0.4.7
+Stable version: 0.5.0
 
 ## COMPILING
 
@@ -106,7 +106,7 @@ converting binaries using serctl:termios/1) include their definition:
         Get the terminal attributes of the serial device. Returns the
         contents of the system struct termios as a binary.
 
-    serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix()}
+    serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix() | unsupported}
 
         Types   FD = resource()
                 Action = integer() | Option | Options
@@ -130,6 +130,8 @@ converting binaries using serctl:termios/1) include their definition:
         Set the input speed of the serial device. See the warning for
         tcsetattr/2.
 
+        Failure: badarg if Speed is an invalid atom.
+
     serctl:cfsetospeed(Termios, Speed) -> Termios1
 
         Types   Termios = binary() | #termios{}
@@ -138,6 +140,8 @@ converting binaries using serctl:termios/1) include their definition:
 
         Set the input speed of the serial device. See the warning for
         tcsetattr/2.
+
+        Failure: badarg if Speed is an invalid atom.
 
     serctl:getfd(FD) -> integer()
 
@@ -232,7 +236,7 @@ serctl:tcsetattr/3.
     serctl:ospeed(Termios, Speed) -> #termios{} | binary()
 
         Types   Termios = #termios{}
-                Speed = integer()
+                Speed = integer() | atom()
 
         ispeed/1 and ospeed/1 return the input and output speed of the
         serial device. Note the speed returned is the constant defined
@@ -240,6 +244,8 @@ serctl:tcsetattr/3.
 
         ispeed/2 and ospeed/2 return an Erlang termios record that can be
         used for setting the input and output speed of the serial device.
+
+        Failure: badarg if Speed is an invalid atom.
 
     serctl:baud(Speed) -> integer()
 

@@ -43,6 +43,8 @@ run(State) ->
         mode(State),
         ispeed(State),
         ospeed(State),
+        ispeed_badarg(State),
+        ospeed_badarg(State),
         baud(State),
         termios(State)
     ].
@@ -66,6 +68,14 @@ ispeed(#state{termios = Termios}) ->
 ospeed(#state{termios = Termios}) ->
     N = serctl:ospeed(Termios),
     ?_assertEqual(true, is_integer(N)).
+
+ispeed_badarg(#state{termios = Termios}) ->
+    N = (catch serctl:ispeed(Termios, notexist)),
+    ?_assertMatch({'EXIT',{badarg,_}}, N).
+
+ospeed_badarg(#state{termios = Termios}) ->
+    N = (catch serctl:ospeed(Termios, notexist)),
+    ?_assertMatch({'EXIT',{badarg,_}}, N).
 
 baud(#state{}) ->
     N = serctl:baud(115200),

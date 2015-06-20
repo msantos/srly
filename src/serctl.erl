@@ -116,12 +116,30 @@ write(_,_) ->
 tcgetattr(_) ->
     erlang:nif_error(not_implemented).
 
--spec tcsetattr(fd(),[atom()] | atom() | integer(), termios()) -> 'ok' | errno().
+-spec tcsetattr(fd(),[atom()] | atom() | integer(), termios()) -> 'ok' | errno() | {'error','unsupported'}.
 tcsetattr(FD, Action, Termios) when is_list(Action) ->
-    Option = lists:foldl(fun(X,N) -> constant(X) bxor N end, 0, Action),
-    tcsetattr(FD, Option, Termios);
+    Option = lists:foldl(fun
+            (_X,undefined) ->
+                undefined;
+            (X,N) ->
+                case constant(X) of
+                    undefined -> undefined;
+                    Constant -> Constant bxor N
+                end
+        end, 0, Action),
+    case Option of
+        undefined ->
+            {error,unsupported};
+        N ->
+            tcsetattr(FD, N, Termios)
+    end;
 tcsetattr(FD, Action, Termios) when is_atom(Action) ->
-    tcsetattr(FD, constant(Action), Termios);
+    case constant(Action) of
+        undefined ->
+            {error,unsupported};
+        N ->
+            tcsetattr(FD, N, Termios)
+    end;
 tcsetattr(FD, Action, #termios{} = Termios) ->
     tcsetattr(FD, Action, termios(Termios));
 tcsetattr(FD, Action, Termios) ->
@@ -134,7 +152,12 @@ tcsetattr_nif(_,_,_) ->
 cfsetispeed(#termios{} = Termios, Speed) ->
     cfsetispeed(termios(Termios), Speed);
 cfsetispeed(Termios, Speed) when is_atom(Speed) ->
-    cfsetispeed(termios(Termios), constant(Speed));
+    case constant(Speed) of
+        undefined ->
+            erlang:error(badarg, [Termios, Speed]);
+        Constant ->
+            cfsetispeed(termios(Termios), Constant)
+    end;
 cfsetispeed(Termios, Speed) ->
     cfsetispeed_nif(Termios, Speed).
 
@@ -145,7 +168,12 @@ cfsetispeed_nif(_,_) ->
 cfsetospeed(#termios{} = Termios, Speed) ->
     cfsetospeed(termios(Termios), Speed);
 cfsetospeed(Termios, Speed) when is_atom(Speed) ->
-    cfsetospeed(termios(Termios), constant(Speed));
+    case constant(Speed) of
+        undefined ->
+            erlang:error(badarg, [Termios, Speed]);
+        Constant ->
+            cfsetospeed(termios(Termios), Constant)
+    end;
 cfsetospeed(Termios, Speed) ->
     cfsetospeed_nif(Termios, Speed).
 
@@ -244,8 +272,10 @@ getflag_1(#termios{oflag = Flag}, oflag, Opt) ->
     getflag_2(Flag, Opt).
 
 getflag_2(Flag, Opt) ->
-    N = constant(Opt),
-    N == Flag band N.
+    case constant(Opt) of
+        undefined -> false;
+        N -> N == Flag band N
+    end.
 
 -spec flow(binary() | #termios{}) -> boolean().
 flow(Termios) ->
@@ -285,7 +315,12 @@ ispeed(#termios{ispeed = Speed}) ->
 ispeed(Termios, Speed) when is_binary(Termios) ->
     ispeed(termios(Termios), Speed);
 ispeed(Termios, Speed) when is_atom(Speed) ->
-    ispeed(Termios, constant(Speed));
+    case constant(Speed) of
+        undefined ->
+            erlang:error(badarg, [Termios,Speed]);
+        Constant ->
+            ispeed(Termios, Constant)
+    end;
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetispeed(Termios, Speed)).
 
@@ -299,7 +334,12 @@ ospeed(#termios{ospeed = Speed}) ->
 ospeed(Termios, Speed) when is_binary(Termios) ->
     ospeed(termios(Termios), Speed);
 ospeed(Termios, Speed) when is_atom(Speed) ->
-    ospeed(Termios, constant(Speed));
+    case constant(Speed) of
+        undefined ->
+            erlang:error(badarg, [Termios,Speed]);
+        Constant ->
+            ospeed(Termios, Constant)
+    end;
 ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetospeed(Termios, Speed)).
 
