@@ -111,10 +111,13 @@ converting binaries using serctl:termios/1) include their definition:
         Types   FD = resource()
                 Action = integer() | Option | Options
                 Options = [Option]
-                Option = tcsanow | tcsadrain | tcsaflush
+                Option = tcsanow | tcsadrain | tcsaflush | tcsasoft
                 Termios = binary() | #termios{}
 
         Sets the terminal attributes of the serial device.
+
+        'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
+        {error,unsupported} on other platforms.
 
         Warning: the contents of Termios are passed directly to
         tcsettr(3). If the system tcsettr(3) does not perform any

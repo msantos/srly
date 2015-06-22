@@ -177,6 +177,9 @@ const struct SERCTL_DEF serctl_const[] = {
     {"tcsanow", TCSANOW},
     {"tcsadrain", TCSADRAIN},
     {"tcsaflush", TCSAFLUSH},
+#ifdef TCSASOFT
+    {"tcsasoft", TCSASOFT},
+#endif
 
 #ifdef TIOCMBIC
     {"tiocmbic", TIOCMBIC},
