@@ -179,8 +179,6 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     ErlNifBinary buf = {0};
     ssize_t n = -1;
 
-    ERL_NIF_TERM rv = atom_ok;
-
 
     if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
         return enif_make_badarg(env);
@@ -191,13 +189,9 @@ nif_write(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     n = write(sp->fd, buf.data, buf.size);
 
     if (n < 0)
-        rv = error_tuple(env, errno);
-    else if (n != buf.size)
-        rv = enif_make_tuple2(env,
-            atom_ok,
-            enif_make_long(env, n));
+        return error_tuple(env, errno);
 
-    return rv;
+    return enif_make_tuple2(env, atom_ok, enif_make_int64(env, n));
 }
 
     static ERL_NIF_TERM
@@ -399,7 +393,7 @@ static ErlNifFunc nif_funcs[] = {
     {"fdopen", 1, nif_fdopen},
     {"close", 1, nif_close},
     {"read", 2, nif_read},
-    {"write", 2, nif_write},
+    {"write_nif", 2, nif_write},
     {"tcgetattr", 1, nif_tcgetattr},
     {"tcsetattr_nif", 3, nif_tcsetattr},
     {"cfsetispeed_nif", 2, nif_cfsetispeed},

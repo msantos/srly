@@ -109,7 +109,16 @@ read(_,_) ->
     erlang:nif_error(not_implemented).
 
 -spec write(fd(),iodata()) -> 'ok' | {'ok',non_neg_integer()} | errno().
-write(_,_) ->
+write(FD,Buf) ->
+    Size = iolist_size(Buf),
+    case write_nif(FD, Buf) of
+        {ok, Size} ->
+            ok;
+        Reply ->
+            Reply
+    end.
+
+write_nif(_,_) ->
     erlang:nif_error(not_implemented).
 
 -spec tcgetattr(fd()) -> {'ok',binary()} | errno().
