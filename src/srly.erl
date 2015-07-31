@@ -68,7 +68,8 @@ open(Dev, Opt) ->
     start_link(Dev, Opt).
 
 close(Ref) when is_pid(Ref) ->
-    gen_server:call(Ref, close, infinity).
+    catch gen_server:call(Ref, close, infinity),
+    ok.
 
 
 getfd(Ref) when is_pid(Ref) ->
@@ -170,16 +171,17 @@ handle_info({Port, {data, Data}}, #state{port = Port, pid = Pid} = State) ->
     Pid ! {serial, self(), Data},
     {noreply, State};
 
+% port has closed
+handle_info({'EXIT', Port, _Reason}, #state{port = Port} = State) ->
+    {stop, shutdown, State};
+
 % WTF?
 handle_info(Info, State) ->
     error_logger:error_report([wtf, Info]),
     {noreply, State}.
 
 terminate(_Reason, #state{fd = FD, port = Port, oattr = Orig}) ->
-    if
-        is_port(Port) -> catch erlang:port_close(Port);
-        true -> ok
-    end,
+    catch erlang:port_close(Port),
     serctl:tcsetattr(FD, tcsanow, Orig),
     serctl:close(FD),
     ok.
@@ -192,7 +194,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 set_active(Res, Opt) ->
     FD = serctl:getfd(Res),
-    open_port({fd, FD, FD}, Opt).
+    erlang:open_port({fd, FD, FD}, Opt).
 
 flush_events(Ref, Pid) ->
     receive
