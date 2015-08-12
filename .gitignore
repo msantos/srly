@@ -14,3 +14,4 @@ deps/
 Session.vim
 .netrwhist
 *~
+_build
