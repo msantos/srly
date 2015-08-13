@@ -1,5 +1,4 @@
-REBAR=$(shell which rebar3 || echo ./rebar3)
-DEPSOLVER_PLT=$(CURDIR)/.depsolver_plt
+REBAR ?= rebar3
 
 all: compile
 
@@ -17,15 +16,11 @@ test: $(REBAR) compile
 
 .PHONY: test dialyzer typer clean distclean
 
-$(DEPSOLVER_PLT):
-	@dialyzer --output_plt $(DEPSOLVER_PLT) --build_plt \
-		--apps erts kernel stdlib crypto
-
 dialyzer: $(DEPSOLVER_PLT)
-	@dialyzer $(DIALYZER_FLAGS) --plt $(DEPSOLVER_PLT) -Wrace_conditions --src src examples/*
+	@$(REBAR) dialyzer
 
 typer: $(DEPSOLVER_PLT)
-	@typer -I include --plt $(DEPSOLVER_PLT) -r ./src
+	@typer -I include --plt _build/default/*_plt -r ./src
 
 distclean: clean
 	@rm $(DEPSOLVER_PLT)
