@@ -2,16 +2,16 @@ REBAR ?= rebar3
 
 all: compile
 
-compile: $(REBAR)
+compile:
 	@$(REBAR) compile
 
-clean: $(REBAR)
+clean:
 	@$(REBAR) clean
 
-deps: $(REBAR)
+deps:
 	@$(REBAR) get-deps
 
-test: $(REBAR) compile
+test: compile
 	@$(REBAR) eunit
 
 .PHONY: test dialyzer typer clean distclean
