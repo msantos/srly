@@ -1,4 +1,4 @@
-%% Copyright (c) 2011-2015, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2011-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -182,8 +182,8 @@ handle_info(Info, State) ->
 
 terminate(_Reason, #state{fd = FD, port = Port, oattr = Orig}) ->
     catch erlang:port_close(Port),
-    serctl:tcsetattr(FD, tcsanow, Orig),
-    serctl:close(FD),
+    _ = serctl:tcsetattr(FD, tcsanow, Orig),
+    _ = serctl:close(FD),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

@@ -1,4 +1,4 @@
-%% Copyright (c) 2011-2015, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2011-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -209,7 +209,7 @@ getfd(_) ->
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
--spec readx(fd(),timeout()) -> {'ok',binary()} | errno().
+-spec readx(fd(),non_neg_integer()) -> {'ok',binary()} | errno().
 readx(FD, N) ->
     readx(FD, N, infinity).
 
@@ -265,7 +265,7 @@ setflag_1(Val, [Key|Rest]) when is_atom(Key) ->
     setflag_1(Val, [{Key, true}|Rest]).
 
 
--spec getflag(binary() | #termios{},'cflag' | 'iflag' | 'lflag' | 'oflag',atom()) -> boolean().
+-spec getflag(<<_:64, _:_*8>> | #termios{},'cflag' | 'iflag' | 'lflag' | 'oflag',atom()) -> boolean().
 getflag(Termios, Flag, Opt) when is_binary(Termios) ->
     getflag(termios(Termios), Flag, Opt);
 getflag(#termios{} = Termios, Flag, Opt) ->
@@ -286,11 +286,11 @@ getflag_2(Flag, Opt) ->
         N -> N == Flag band N
     end.
 
--spec flow(binary() | #termios{}) -> boolean().
+-spec flow(<<_:64,_:_*8>> | #termios{}) -> boolean().
 flow(Termios) ->
     getflag(Termios, cflag, crtscts).
 
--spec flow(binary() | #termios{},boolean()) -> #termios{}.
+-spec flow(<<_:64,_:_*8>> | #termios{},boolean()) -> #termios{}.
 flow(Termios, Bool) when Bool == true; Bool == false ->
     setflag(Termios, [{cflag, [{crtscts, Bool}]}]).
 
@@ -320,7 +320,7 @@ ispeed(Speed) when is_binary(Speed) ->
 ispeed(#termios{ispeed = Speed}) ->
     Speed.
 
--spec ispeed(binary() | #termios{},atom() | integer()) -> binary() | #termios{}.
+-spec ispeed(<<_:64,_:_*8>> | #termios{},atom() | integer()) -> <<_:8,_:_*8>> | #termios{}.
 ispeed(Termios, Speed) when is_binary(Termios) ->
     ispeed(termios(Termios), Speed);
 ispeed(Termios, Speed) when is_atom(Speed) ->
@@ -339,7 +339,7 @@ ospeed(Speed) when is_binary(Speed) ->
 ospeed(#termios{ospeed = Speed}) ->
     Speed.
 
--spec ospeed(binary() | #termios{},atom() | integer()) -> binary() | #termios{}.
+-spec ospeed(<<_:64,_:_*8>> | #termios{},atom() | integer()) -> <<_:8,_:_*8>> | #termios{}.
 ospeed(Termios, Speed) when is_binary(Termios) ->
     ospeed(termios(Termios), Speed);
 ospeed(Termios, Speed) when is_atom(Speed) ->
