@@ -101,6 +101,7 @@ nif_fdopen(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     int fd = 0;
     SRLY_STATE *sp = NULL;
+    ERL_NIF_TERM t = {0};
 
 
     if (!enif_get_int(env, argv[0], &fd))
@@ -115,9 +116,12 @@ nif_fdopen(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
     sp->fd = fd;
 
+    t = enif_make_resource(env, sp);
+    enif_release_resource(sp);
+
     return enif_make_tuple2(env,
             atom_ok,
-            enif_make_resource(env, sp));
+            t);
 }
 
     static ERL_NIF_TERM
@@ -134,7 +138,6 @@ nif_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
         rv = error_tuple(env, errno);
 
     sp->fd = -1;
-    enif_release_resource(sp);
 
     return rv;
 }
