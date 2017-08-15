@@ -70,6 +70,8 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary dev;
     SRLY_STATE *sp = NULL;
+    ERL_NIF_TERM t = {0};
+    int err = errno;
 
     if (!enif_inspect_iolist_as_binary(env, argv[0], (ErlNifBinary *)&dev))
         return enif_make_badarg(env);
@@ -86,14 +88,15 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     sp->fd = open((char *)dev.data, O_RDWR|O_NOCTTY|O_NONBLOCK);
 
     if (sp->fd < 0 || isatty(sp->fd) != 1) {
-        int err = errno;
+        err = errno;
         enif_release_resource(sp);
         return error_tuple(env, err);
     }
 
-    return enif_make_tuple2(env,
-            atom_ok,
-            enif_make_resource(env, sp));
+    t = enif_make_resource(env, sp);
+    enif_release_resource(sp);
+
+    return enif_make_tuple2(env, atom_ok, t);
 }
 
     static ERL_NIF_TERM
@@ -102,7 +105,6 @@ nif_fdopen(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     int fd = 0;
     SRLY_STATE *sp = NULL;
     ERL_NIF_TERM t = {0};
-
 
     if (!enif_get_int(env, argv[0], &fd))
         return enif_make_badarg(env);
