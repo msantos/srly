@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2015, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2011-2017, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,8 +80,10 @@ nif_open(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (sp == NULL)
         return error_tuple(env, ENOMEM);
 
-    if (!enif_realloc_binary(&dev, dev.size+1))
+    if (!enif_realloc_binary(&dev, dev.size+1)) {
+        enif_release_resource(sp);
         return enif_make_badarg(env);
+    }
 
     dev.data[dev.size-1] = '\0';
 
