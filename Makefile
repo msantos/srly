@@ -1,3 +1,5 @@
+.PHONY: all compile deps test dialyzer typer clean distclean
+
 REBAR ?= rebar3
 
 all: compile
@@ -12,15 +14,10 @@ deps:
 	@$(REBAR) get-deps
 
 test: compile
-	@$(REBAR) eunit
+	@$(REBAR) ct
 
-.PHONY: test dialyzer typer clean distclean
-
-dialyzer: $(DEPSOLVER_PLT)
+dialyzer:
 	@$(REBAR) dialyzer
 
-typer: $(DEPSOLVER_PLT)
+typer:
 	@typer -I include --plt _build/default/*_plt -r ./src
-
-distclean: clean
-	@rm $(DEPSOLVER_PLT)
