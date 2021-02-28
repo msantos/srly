@@ -41,13 +41,14 @@
 #include <errno.h>
 
 #if defined(__SVR4) && defined(__sun)
-#define u_int8_t    uint8_t
-#define u_int16_t   uint16_t
-#define u_int32_t   uint32_t
-#define u_int64_t   uint64_t
+#define u_int8_t uint8_t
+#define u_int16_t uint16_t
+#define u_int32_t uint32_t
+#define u_int64_t uint64_t
 #endif
 
-struct SERCTL_DEF {
+struct SERCTL_DEF
+{
     const char *key;
     u_int32_t val;
 };
@@ -199,5 +200,4 @@ const struct SERCTL_DEF serctl_const[] = {
     {"tiocm_rts", TIOCM_RTS},
 #endif
 
-    {NULL, 0}
-};
+    {NULL, 0}};
