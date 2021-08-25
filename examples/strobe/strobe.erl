@@ -33,8 +33,8 @@
 
 -define(LEDS, 5).
 -define(DEV, "/dev/ttyUSB0").
--define(INTERVAL, 200). % milliseconds
-
+% milliseconds
+-define(INTERVAL, 200).
 
 start() ->
     start([]).
@@ -44,7 +44,7 @@ start(Opt) ->
     Leds = proplists:get_value(leds, Opt, ?LEDS),
     Interval = proplists:get_value(interval, Opt, ?INTERVAL),
 
-    {ok,FD} = serctl:open(Dev),
+    {ok, FD} = serctl:open(Dev),
 
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
@@ -60,9 +60,9 @@ start(Opt) ->
 
     {ok, Termios1} = serctl:tcgetattr(FD),
 
-    blink(FD, Interval, lists:seq(0,Leds)).
+    blink(FD, Interval, lists:seq(0, Leds)).
 
-blink(FD, N, [H|T]) ->
+blink(FD, N, [H | T]) ->
     ok = serctl:write(FD, <<(1 bsl H):4/big-unsigned-integer-unit:8>>),
     timer:sleep(N),
     blink(FD, N, T ++ [H]).

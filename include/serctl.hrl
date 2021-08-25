@@ -31,17 +31,17 @@
 
 -define(SIZEOF_INT, 4).
 -define(SIZEOF_UNSIGNED_INT, ?SIZEOF_INT).
--define(UINT16(N), (N):2/native-unsigned-integer-unit:8).
--define(UINT32(N), (N):4/native-unsigned-integer-unit:8).
--define(UINT64(N), (N):8/native-unsigned-integer-unit:8).
+-define(UINT16(N), (N):2 / native - unsigned - integer - unit:8).
+-define(UINT32(N), (N):4 / native - unsigned - integer - unit:8).
+-define(UINT64(N), (N):8 / native - unsigned - integer - unit:8).
 
 -record(termios, {
-        iflag = 0,
-        oflag = 0,
-        cflag = 0,
-        lflag = 0,
-        line = 0,
-        cc = <<>>,
-        ispeed = serctl:constant(b9600),
-        ospeed = serctl:constant(b9600)
-    }).
+    iflag = 0,
+    oflag = 0,
+    cflag = 0,
+    lflag = 0,
+    line = 0,
+    cc = <<>>,
+    ispeed = serctl:constant(b9600),
+    ospeed = serctl:constant(b9600)
+}).

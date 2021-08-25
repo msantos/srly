@@ -36,8 +36,8 @@
 
 -define(LEDS, 5).
 -define(DEV, "/dev/ttyUSB0").
--define(INTERVAL, 200). % milliseconds
-
+% milliseconds
+-define(INTERVAL, 200).
 
 start() ->
     start([]).
@@ -49,9 +49,9 @@ start(Opt) ->
 
     {ok, FD} = srly:open(Dev, [{flow, false}, {speed, b9600}]),
 
-    blink(FD, Interval, lists:seq(0,Leds)).
+    blink(FD, Interval, lists:seq(0, Leds)).
 
-blink(FD, N, [H|T]) ->
+blink(FD, N, [H | T]) ->
     ok = srly:send(FD, <<(1 bsl H):4/big-unsigned-integer-unit:8>>),
     timer:sleep(N),
     blink(FD, N, T ++ [H]).

@@ -1,4 +1,4 @@
-%%% Copyright (c) 2011-2020 Michael Santos <michael.santos@gmail.com>. All
+%%% Copyright (c) 2011-2021 Michael Santos <michael.santos@gmail.com>. All
 %%% rights reserved.
 %%%
 %%% Redistribution and use in source and binary forms, with or without
@@ -30,32 +30,40 @@
 -module(srly).
 -behaviour(gen_server).
 
-
 -export([
-        open/1, open/2,
-        close/1,
+    open/1, open/2,
+    close/1,
 
-        getfd/1,
+    getfd/1,
 
-        read/2,
-        write/2,
-        send/2,
+    read/2,
+    write/2,
+    send/2,
 
-        controlling_process/2
-    ]).
+    controlling_process/2
+]).
 
 -export([start_link/2]).
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-        terminate/2, code_change/3]).
+-export([
+    init/1,
+    handle_call/3,
+    handle_cast/2,
+    handle_info/2,
+    terminate/2,
+    code_change/3
+]).
 
 -record(state, {
-        oattr,      % Original termios attributes
-        port,
-        pid,        % PID of controlling process
-        fd,         % serial dev file descriptor
-        dev         % device name
-    }).
-
+    % Original termios attributes
+    oattr,
+    port,
+    % PID of controlling process
+    pid,
+    % serial dev file descriptor
+    fd,
+    % device name
+    dev
+}).
 
 %%--------------------------------------------------------------------
 %%% API
@@ -70,10 +78,8 @@ close(Ref) when is_pid(Ref) ->
     catch gen_server:call(Ref, close, infinity),
     ok.
 
-
 getfd(Ref) when is_pid(Ref) ->
     gen_server:call(Ref, fd, infinity).
-
 
 read(FD, Len) when is_integer(Len) ->
     serctl:read(FD, Len).
@@ -89,11 +95,9 @@ controlling_process(Ref, Pid) when is_pid(Ref), is_pid(Pid) ->
     gen_server:call(Ref, {controlling_process, Pid}, infinity),
     flush_events(Ref, Pid).
 
-
 start_link(Dev, Opt) ->
     Pid = self(),
     gen_server:start_link(?MODULE, [Pid, Dev, Opt], []).
-
 
 %%--------------------------------------------------------------------
 %%% Callbacks
@@ -103,16 +107,17 @@ init([Pid, Dev, Opt]) ->
 
     Speed = proplists:get_value(speed, Opt, b9600),
     Flow = proplists:get_value(flow, Opt, true),
-    PortOpt = proplists:get_value(port_options, Opt, [stream,binary]),
+    PortOpt = proplists:get_value(port_options, Opt, [stream, binary]),
 
     {ok, FD} = serctl:open(Dev),
 
     {ok, Orig} = serctl:tcgetattr(FD),
 
-    Mode = case proplists:get_value(mode, Opt, raw) of
-        raw -> serctl:mode(raw);
-        none -> Orig
-    end,
+    Mode =
+        case proplists:get_value(mode, Opt, raw) of
+            raw -> serctl:mode(raw);
+            none -> Orig
+        end,
 
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
@@ -121,44 +126,40 @@ init([Pid, Dev, Opt]) ->
             fun(N) -> serctl:flow(N, Flow) end,
             fun(N) -> serctl:ispeed(N, Speed) end,
             fun(N) -> serctl:ospeed(N, Speed) end
-        ]),
+        ]
+    ),
 
     ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
     {ok, #state{
-            oattr = Orig,
-            port = set_active(FD, PortOpt),
-            pid = Pid,
-            fd = FD,
-            dev = Dev
+        oattr = Orig,
+        port = set_active(FD, PortOpt),
+        pid = Pid,
+        fd = FD,
+        dev = Dev
     }}.
-
 
 %%
 %% retrieve/modify gen_server state
 %%
 handle_call(devname, _From, #state{dev = Dev} = State) ->
     {reply, Dev, State};
-
 handle_call(fd, _From, #state{fd = FD} = State) ->
     {reply, FD, State};
-
 handle_call({send, Data}, _From, #state{port = Port} = State) ->
-    Reply = try erlang:port_command(Port, Data) of
-        true -> ok
+    Reply =
+        try erlang:port_command(Port, Data) of
+            true -> ok
         catch
             error:Error -> {error, Error}
         end,
     {reply, Reply, State};
-
 handle_call(close, _From, State) ->
     {stop, normal, ok, State};
-
-handle_call({controlling_process, Pid}, {Owner,_}, #state{pid = Owner} = State) ->
+handle_call({controlling_process, Pid}, {Owner, _}, #state{pid = Owner} = State) ->
     link(Pid),
     unlink(Owner),
     {reply, ok, State#state{pid = Pid}}.
-
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -169,11 +170,9 @@ handle_cast(_Msg, State) ->
 handle_info({Port, {data, Data}}, #state{port = Port, pid = Pid} = State) ->
     Pid ! {serial, self(), Data},
     {noreply, State};
-
 % port has closed
 handle_info({'EXIT', Port, _Reason}, #state{port = Port} = State) ->
     {stop, shutdown, State};
-
 % WTF?
 handle_info(Info, State) ->
     error_logger:error_report([wtf, Info]),
@@ -200,6 +199,5 @@ flush_events(Ref, Pid) ->
         {serial, Ref, _} = Event ->
             Pid ! Event,
             flush_events(Ref, Pid)
-    after
-        0 -> ok
+    after 0 -> ok
     end.

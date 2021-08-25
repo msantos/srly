@@ -1,5 +1,4 @@
-
-%%% Copyright (c) 2011-2020 Michael Santos <michael.santos@gmail.com>. All
+%%% Copyright (c) 2011-2021 Michael Santos <michael.santos@gmail.com>. All
 %%% rights reserved.
 %%%
 %%% Redistribution and use in source and binary forms, with or without
@@ -32,52 +31,51 @@
 -include("serctl.hrl").
 
 -export([
-        open/1,
-        close/1,
+    open/1,
+    close/1,
 
-        read/2,
-        write/2,
+    read/2,
+    write/2,
 
-        readx/2, readx/3,
+    readx/2, readx/3,
 
-        tcgetattr/1,
-        tcsetattr/3,
+    tcgetattr/1,
+    tcsetattr/3,
 
-        cfsetispeed/2,
-        cfsetospeed/2,
+    cfsetispeed/2,
+    cfsetospeed/2,
 
-        ioctl/3,
+    ioctl/3,
 
-        constant/0, constant/1,
+    constant/0, constant/1,
 
-        termios/1,
+    termios/1,
 
-        setflag/2,
-        getflag/3,
-        flow/1, flow/2,
-        mode/1,
-        ispeed/1, ispeed/2,
-        ospeed/1, ospeed/2,
-        baud/1,
+    setflag/2,
+    getflag/3,
+    flow/1, flow/2,
+    mode/1,
+    ispeed/1, ispeed/2,
+    ospeed/1, ospeed/2,
+    baud/1,
 
-        getfd/1,
+    getfd/1,
 
-        offset/2,
-        wordalign/1, wordalign/2
-    ]).
+    offset/2,
+    wordalign/1, wordalign/2
+]).
 -export([
-        init/0
-    ]).
+    init/0
+]).
 
 -type fd() :: any().
--type dev() :: iodata() | {'fd',integer()}.
--type errno() :: {'error',file:posix()}.
+-type dev() :: iodata() | {'fd', integer()}.
+-type errno() :: {'error', file:posix()}.
 -type termios() :: #termios{} | binary().
 
--export_type([fd/0,dev/0,errno/0,termios/0]).
+-export_type([fd/0, dev/0, errno/0, termios/0]).
 
 -on_load(on_load/0).
-
 
 %%--------------------------------------------------------------------
 %%% NIF Stubs
@@ -88,7 +86,7 @@ init() ->
 on_load() ->
     erlang:load_nif(progname(), []).
 
--spec open(dev()) -> {'ok',fd()} | errno().
+-spec open(dev()) -> {'ok', fd()} | errno().
 open({fd, FD}) ->
     fdopen(FD);
 open(Dev) ->
@@ -100,16 +98,16 @@ open_nif(_) ->
 fdopen(_) ->
     erlang:nif_error(not_implemented).
 
--spec close(fd()) -> {'ok',fd()} | errno().
+-spec close(fd()) -> {'ok', fd()} | errno().
 close(_) ->
     erlang:nif_error(not_implemented).
 
--spec read(fd(),non_neg_integer()) -> {'ok',binary()} | errno().
-read(_,_) ->
+-spec read(fd(), non_neg_integer()) -> {'ok', binary()} | errno().
+read(_, _) ->
     erlang:nif_error(not_implemented).
 
--spec write(fd(),iodata()) -> 'ok' | {'ok',non_neg_integer()} | errno().
-write(FD,Buf) ->
+-spec write(fd(), iodata()) -> 'ok' | {'ok', non_neg_integer()} | errno().
+write(FD, Buf) ->
     Size = iolist_size(Buf),
     case write_nif(FD, Buf) of
         {ok, Size} ->
@@ -118,34 +116,39 @@ write(FD,Buf) ->
             Reply
     end.
 
-write_nif(_,_) ->
+write_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
--spec tcgetattr(fd()) -> {'ok',binary()} | errno().
+-spec tcgetattr(fd()) -> {'ok', binary()} | errno().
 tcgetattr(_) ->
     erlang:nif_error(not_implemented).
 
--spec tcsetattr(fd(),[atom()] | atom() | integer(), termios()) -> 'ok' | errno() | {'error','unsupported'}.
+-spec tcsetattr(fd(), [atom()] | atom() | integer(), termios()) ->
+    'ok' | errno() | {'error', 'unsupported'}.
 tcsetattr(FD, Action, Termios) when is_list(Action) ->
-    Option = lists:foldl(fun
-            (_X,undefined) ->
+    Option = lists:foldl(
+        fun
+            (_X, undefined) ->
                 undefined;
-            (X,N) ->
+            (X, N) ->
                 case constant(X) of
                     undefined -> undefined;
                     Constant -> Constant bxor N
                 end
-        end, 0, Action),
+        end,
+        0,
+        Action
+    ),
     case Option of
         undefined ->
-            {error,unsupported};
+            {error, unsupported};
         N ->
             tcsetattr(FD, N, Termios)
     end;
 tcsetattr(FD, Action, Termios) when is_atom(Action) ->
     case constant(Action) of
         undefined ->
-            {error,unsupported};
+            {error, unsupported};
         N ->
             tcsetattr(FD, N, Termios)
     end;
@@ -154,7 +157,7 @@ tcsetattr(FD, Action, #termios{} = Termios) ->
 tcsetattr(FD, Action, Termios) ->
     tcsetattr_nif(FD, Action, Termios).
 
-tcsetattr_nif(_,_,_) ->
+tcsetattr_nif(_, _, _) ->
     erlang:nif_error(not_implemented).
 
 -spec cfsetispeed(termios(), atom() | integer()) -> binary().
@@ -170,7 +173,7 @@ cfsetispeed(Termios, Speed) when is_atom(Speed) ->
 cfsetispeed(Termios, Speed) ->
     cfsetispeed_nif(Termios, Speed).
 
-cfsetispeed_nif(_,_) ->
+cfsetispeed_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
 -spec cfsetospeed(termios(), atom() | integer()) -> binary().
@@ -186,11 +189,11 @@ cfsetospeed(Termios, Speed) when is_atom(Speed) ->
 cfsetospeed(Termios, Speed) ->
     cfsetospeed_nif(Termios, Speed).
 
-cfsetospeed_nif(_,_) ->
+cfsetospeed_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
--spec ioctl(fd(),integer(),binary()) -> {'ok',binary()} | errno().
-ioctl(_,_,_) ->
+-spec ioctl(fd(), integer(), binary()) -> {'ok', binary()} | errno().
+ioctl(_, _, _) ->
     erlang:nif_error(not_implemented).
 
 -spec constant() -> proplists:proplist().
@@ -205,15 +208,14 @@ constant(_) ->
 getfd(_) ->
     erlang:nif_error(not_implemented).
 
-
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
--spec readx(fd(),non_neg_integer()) -> {'ok',binary()} | errno().
+-spec readx(fd(), non_neg_integer()) -> {'ok', binary()} | errno().
 readx(FD, N) ->
     readx(FD, N, infinity).
 
--spec readx(fd(),non_neg_integer(),timeout()) -> {'ok',binary()} | errno().
+-spec readx(fd(), non_neg_integer(), timeout()) -> {'ok', binary()} | errno().
 readx(FD, N, Timeout) ->
     Ref = make_ref(),
     Self = self(),
@@ -221,22 +223,23 @@ readx(FD, N, Timeout) ->
     receive
         {Ref, Reply} ->
             Reply
-    after
-        Timeout ->
-            exit(Pid, kill),
-            {error, eintr}
+    after Timeout ->
+        exit(Pid, kill),
+        {error, eintr}
     end.
 
-
--spec setflag(binary() | #termios{},proplists:proplist()) -> #termios{}.
+-spec setflag(binary() | #termios{}, proplists:proplist()) -> #termios{}.
 setflag(Termios, Opt) when is_binary(Termios) ->
     setflag(termios(Termios), Opt);
-setflag(#termios{
+setflag(
+    #termios{
         cflag = Cflag0,
         lflag = Lflag0,
         iflag = Iflag0,
         oflag = Oflag0
-    } = Termios, Opt) when is_list(Opt) ->
+    } = Termios,
+    Opt
+) when is_list(Opt) ->
     Cflag = setflag_1(Cflag0, proplists:get_value(cflag, Opt)),
     Lflag = setflag_1(Lflag0, proplists:get_value(lflag, Opt)),
     Iflag = setflag_1(Iflag0, proplists:get_value(iflag, Opt)),
@@ -253,19 +256,19 @@ setflag_1(Val, undefined) ->
     Val;
 setflag_1(Val, []) ->
     Val;
-setflag_1(Bin, [{Offset, Val}|Rest]) when is_binary(Bin), Offset >= 0, Val >= 0 ->
+setflag_1(Bin, [{Offset, Val} | Rest]) when is_binary(Bin), Offset >= 0, Val >= 0 ->
     setflag_1(offset(Bin, {Offset, Val}), Rest);
-setflag_1(Val, [{Key, false}|Rest]) ->
+setflag_1(Val, [{Key, false} | Rest]) ->
     Val1 = Val band bnot constant(Key),
     setflag_1(Val1, Rest);
-setflag_1(Val, [{Key, true}|Rest]) ->
+setflag_1(Val, [{Key, true} | Rest]) ->
     Val1 = Val bor constant(Key),
     setflag_1(Val1, Rest);
-setflag_1(Val, [Key|Rest]) when is_atom(Key) ->
-    setflag_1(Val, [{Key, true}|Rest]).
+setflag_1(Val, [Key | Rest]) when is_atom(Key) ->
+    setflag_1(Val, [{Key, true} | Rest]).
 
-
--spec getflag(<<_:64, _:_*8>> | #termios{},'cflag' | 'iflag' | 'lflag' | 'oflag',atom()) -> boolean().
+-spec getflag(<<_:64, _:_*8>> | #termios{}, 'cflag' | 'iflag' | 'lflag' | 'oflag', atom()) ->
+    boolean().
 getflag(Termios, Flag, Opt) when is_binary(Termios) ->
     getflag(termios(Termios), Flag, Opt);
 getflag(#termios{} = Termios, Flag, Opt) ->
@@ -286,11 +289,11 @@ getflag_2(Flag, Opt) ->
         N -> N == Flag band N
     end.
 
--spec flow(<<_:64,_:_*8>> | #termios{}) -> boolean().
+-spec flow(<<_:64, _:_*8>> | #termios{}) -> boolean().
 flow(Termios) ->
     getflag(Termios, cflag, crtscts).
 
--spec flow(<<_:64,_:_*8>> | #termios{},boolean()) -> #termios{}.
+-spec flow(<<_:64, _:_*8>> | #termios{}, boolean()) -> #termios{}.
 flow(Termios, Bool) when Bool == true; Bool == false ->
     setflag(Termios, [{cflag, [{crtscts, Bool}]}]).
 
@@ -298,20 +301,26 @@ mode(raw) ->
     #termios{
         cc = lists:foldl(
             fun({Offset, Val}, Bin) ->
-                    offset(Bin, {Offset, Val})
+                offset(Bin, {Offset, Val})
             end,
-            <<0:(constant(nccs)*8)>>,   % zero'ed bytes
+            % zero'ed bytes
+            <<0:(constant(nccs) * 8)>>,
             [
-                {constant(vmin), 1},    % Minimum number of characters
-                {constant(vtime), 0}    % Timeout in deciseconds
-            ]),
+                % Minimum number of characters
+                {constant(vmin), 1},
+                % Timeout in deciseconds
+                {constant(vtime), 0}
+            ]
+        ),
 
-        iflag = constant(ignpar),       % ignore (discard) parity errors
+        % ignore (discard) parity errors
+        iflag = constant(ignpar),
 
-        cflag = constant(cs8)
-        bor constant(clocal)
-        bor constant(crtscts)
-        bor constant(cread)
+        cflag =
+            constant(cs8) bor
+                constant(clocal) bor
+                constant(crtscts) bor
+                constant(cread)
     }.
 
 -spec ispeed(binary() | #termios{}) -> non_neg_integer().
@@ -320,13 +329,13 @@ ispeed(Speed) when is_binary(Speed) ->
 ispeed(#termios{ispeed = Speed}) ->
     Speed.
 
--spec ispeed(<<_:64,_:_*8>> | #termios{},atom() | integer()) -> <<_:8,_:_*8>> | #termios{}.
+-spec ispeed(<<_:64, _:_*8>> | #termios{}, atom() | integer()) -> <<_:8, _:_*8>> | #termios{}.
 ispeed(Termios, Speed) when is_binary(Termios) ->
     ispeed(termios(Termios), Speed);
 ispeed(Termios, Speed) when is_atom(Speed) ->
     case constant(Speed) of
         undefined ->
-            erlang:error(badarg, [Termios,Speed]);
+            erlang:error(badarg, [Termios, Speed]);
         Constant ->
             ispeed(Termios, Constant)
     end;
@@ -339,13 +348,13 @@ ospeed(Speed) when is_binary(Speed) ->
 ospeed(#termios{ospeed = Speed}) ->
     Speed.
 
--spec ospeed(<<_:64,_:_*8>> | #termios{},atom() | integer()) -> <<_:8,_:_*8>> | #termios{}.
+-spec ospeed(<<_:64, _:_*8>> | #termios{}, atom() | integer()) -> <<_:8, _:_*8>> | #termios{}.
 ospeed(Termios, Speed) when is_binary(Termios) ->
     ospeed(termios(Termios), Speed);
 ospeed(Termios, Speed) when is_atom(Speed) ->
     case constant(Speed) of
         undefined ->
-            erlang:error(badarg, [Termios,Speed]);
+            erlang:error(badarg, [Termios, Speed]);
         Constant ->
             ospeed(Termios, Constant)
     end;
@@ -354,7 +363,6 @@ ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
 
 baud(Speed) when is_integer(Speed) ->
     constant(list_to_atom("b" ++ integer_to_list(Speed))).
-
 
 %% Terminal interface structure
 %%
@@ -420,25 +428,37 @@ baud(Speed) when is_integer(Speed) ->
 termios(Termios) ->
     termios(Termios, os:type(), erlang:system_info({wordsize, external})).
 
-termios(<<
-    ?UINT32(Iflag),          % input mode flags
-    ?UINT32(Oflag),          % output mode flags
-    ?UINT32(Cflag),          % control mode flags
-    ?UINT32(Lflag),          % local mode flags
-    Rest/binary>>, {unix,linux}, _) ->
-
+termios(
+    <<
+        % input mode flags
+        ?UINT32(Iflag),
+        % output mode flags
+        ?UINT32(Oflag),
+        % control mode flags
+        ?UINT32(Cflag),
+        % local mode flags
+        ?UINT32(Lflag),
+        Rest/binary
+    >>,
+    {unix, linux},
+    _
+) ->
     NCCS = constant(nccs),
     <<
-    Line:8,                 % line discipline
-    Cc:NCCS/bytes,          % control characters
-    Rest1/binary
+        % line discipline
+        Line:8,
+        % control characters
+        Cc:NCCS/bytes,
+        Rest1/binary
     >> = Rest,
 
     Pad = wordalign(1 + NCCS, 4),
     <<
-    _:Pad,
-    ?UINT32(Ispeed),         % input speed
-    ?UINT32(Ospeed)          % output speed
+        _:Pad,
+        % input speed
+        ?UINT32(Ispeed),
+        % output speed
+        ?UINT32(Ospeed)
     >> = Rest1,
     #termios{
         iflag = Iflag,
@@ -450,17 +470,26 @@ termios(<<
         ispeed = Ispeed,
         ospeed = Ospeed
     };
-termios(<<
-    ?UINT32(Iflag),          % input mode flags
-    ?UINT32(Oflag),          % output mode flags
-    ?UINT32(Cflag),          % control mode flags
-    ?UINT32(Lflag),          % local mode flags
-    Rest/binary>>, {unix,sunos}, _) ->
-
+termios(
+    <<
+        % input mode flags
+        ?UINT32(Iflag),
+        % output mode flags
+        ?UINT32(Oflag),
+        % control mode flags
+        ?UINT32(Cflag),
+        % local mode flags
+        ?UINT32(Lflag),
+        Rest/binary
+    >>,
+    {unix, sunos},
+    _
+) ->
     NCCS = constant(nccs),
     <<
-    Cc:NCCS/bytes,          % control characters
-    _/binary
+        % control characters
+        Cc:NCCS/bytes,
+        _/binary
     >> = Rest,
 
     #termios{
@@ -470,24 +499,35 @@ termios(<<
         lflag = Lflag,
         cc = Cc
     };
-termios(<<
-    ?UINT64(Iflag),          % input mode flags
-    ?UINT64(Oflag),          % output mode flags
-    ?UINT64(Cflag),          % control mode flags
-    ?UINT64(Lflag),          % local mode flags
-    Rest/binary>>, {unix,darwin}, 8) ->
-
+termios(
+    <<
+        % input mode flags
+        ?UINT64(Iflag),
+        % output mode flags
+        ?UINT64(Oflag),
+        % control mode flags
+        ?UINT64(Cflag),
+        % local mode flags
+        ?UINT64(Lflag),
+        Rest/binary
+    >>,
+    {unix, darwin},
+    8
+) ->
     NCCS = constant(nccs),
     <<
-    Cc:NCCS/bytes,          % control characters
-    Rest1/binary
+        % control characters
+        Cc:NCCS/bytes,
+        Rest1/binary
     >> = Rest,
 
     Pad = wordalign(NCCS, 8),
     <<
-    _:Pad,
-    ?UINT64(Ispeed),         % input speed
-    ?UINT64(Ospeed)          % output speed
+        _:Pad,
+        % input speed
+        ?UINT64(Ispeed),
+        % output speed
+        ?UINT64(Ospeed)
     >> = Rest1,
     #termios{
         iflag = Iflag,
@@ -498,24 +538,35 @@ termios(<<
         ispeed = Ispeed,
         ospeed = Ospeed
     };
-termios(<<
-    ?UINT32(Iflag),          % input mode flags
-    ?UINT32(Oflag),          % output mode flags
-    ?UINT32(Cflag),          % control mode flags
-    ?UINT32(Lflag),          % local mode flags
-    Rest/binary>>, {unix,_}, _) ->
-
+termios(
+    <<
+        % input mode flags
+        ?UINT32(Iflag),
+        % output mode flags
+        ?UINT32(Oflag),
+        % control mode flags
+        ?UINT32(Cflag),
+        % local mode flags
+        ?UINT32(Lflag),
+        Rest/binary
+    >>,
+    {unix, _},
+    _
+) ->
     NCCS = constant(nccs),
     <<
-    Cc:NCCS/bytes,          % control characters
-    Rest1/binary
+        % control characters
+        Cc:NCCS/bytes,
+        Rest1/binary
     >> = Rest,
 
     Pad = wordalign(NCCS, 4),
     <<
-    _:Pad,
-    ?UINT32(Ispeed),         % input speed
-    ?UINT32(Ospeed)          % output speed
+        _:Pad,
+        % input speed
+        ?UINT32(Ispeed),
+        % output speed
+        ?UINT32(Ospeed)
     >> = Rest1,
     #termios{
         iflag = Iflag,
@@ -526,7 +577,8 @@ termios(<<
         ispeed = Ispeed,
         ospeed = Ospeed
     };
-termios(#termios{
+termios(
+    #termios{
         iflag = Iflag,
         oflag = Oflag,
         cflag = Cflag,
@@ -535,52 +587,62 @@ termios(#termios{
         cc = Cc,
         ispeed = Ispeed,
         ospeed = Ospeed
-    }, {unix,linux}, _) ->
+    },
+    {unix, linux},
+    _
+) ->
     NCCS = constant(nccs),
 
-    Cc1 = case Cc of
-        <<>> -> <<0:(NCCS*8)>>;
-        _ -> Cc
-    end,
+    Cc1 =
+        case Cc of
+            <<>> -> <<0:(NCCS * 8)>>;
+            _ -> Cc
+        end,
 
     Pad = wordalign(1 + NCCS, 4),
 
     <<
-    ?UINT32(Iflag),
-    ?UINT32(Oflag),
-    ?UINT32(Cflag),
-    ?UINT32(Lflag),
-    Line:8,
-    Cc1/binary,
-    0:Pad,
-    ?UINT32(Ispeed),
-    ?UINT32(Ospeed)
+        ?UINT32(Iflag),
+        ?UINT32(Oflag),
+        ?UINT32(Cflag),
+        ?UINT32(Lflag),
+        Line:8,
+        Cc1/binary,
+        0:Pad,
+        ?UINT32(Ispeed),
+        ?UINT32(Ospeed)
     >>;
-termios(#termios{
+termios(
+    #termios{
         iflag = Iflag,
         oflag = Oflag,
         cflag = Cflag,
         lflag = Lflag,
         cc = Cc
-    }, {unix,sunos}, _) ->
+    },
+    {unix, sunos},
+    _
+) ->
     NCCS = constant(nccs),
 
-    Cc1 = case Cc of
-        <<>> -> <<0:(NCCS*8)>>;
-        _ -> Cc
-    end,
+    Cc1 =
+        case Cc of
+            <<>> -> <<0:(NCCS * 8)>>;
+            _ -> Cc
+        end,
 
     Pad = wordalign(NCCS, 4),
 
     <<
-    ?UINT32(Iflag),
-    ?UINT32(Oflag),
-    ?UINT32(Cflag),
-    ?UINT32(Lflag),
-    Cc1/binary,
-    0:Pad
+        ?UINT32(Iflag),
+        ?UINT32(Oflag),
+        ?UINT32(Cflag),
+        ?UINT32(Lflag),
+        Cc1/binary,
+        0:Pad
     >>;
-termios(#termios{
+termios(
+    #termios{
         iflag = Iflag,
         oflag = Oflag,
         cflag = Cflag,
@@ -588,27 +650,32 @@ termios(#termios{
         cc = Cc,
         ispeed = Ispeed,
         ospeed = Ospeed
-    }, {unix,darwin}, 8) ->
+    },
+    {unix, darwin},
+    8
+) ->
     NCCS = constant(nccs),
 
-    Cc1 = case Cc of
-        <<>> -> <<0:(NCCS*8)>>;
-        _ -> Cc
-    end,
+    Cc1 =
+        case Cc of
+            <<>> -> <<0:(NCCS * 8)>>;
+            _ -> Cc
+        end,
 
     Pad = wordalign(NCCS, 8),
 
     <<
-    ?UINT64(Iflag),
-    ?UINT64(Oflag),
-    ?UINT64(Cflag),
-    ?UINT64(Lflag),
-    Cc1/binary,
-    0:Pad,
-    ?UINT64(Ispeed),
-    ?UINT64(Ospeed)
+        ?UINT64(Iflag),
+        ?UINT64(Oflag),
+        ?UINT64(Cflag),
+        ?UINT64(Lflag),
+        Cc1/binary,
+        0:Pad,
+        ?UINT64(Ispeed),
+        ?UINT64(Ospeed)
     >>;
-termios(#termios{
+termios(
+    #termios{
         iflag = Iflag,
         oflag = Oflag,
         cflag = Cflag,
@@ -616,25 +683,29 @@ termios(#termios{
         cc = Cc,
         ispeed = Ispeed,
         ospeed = Ospeed
-    }, {unix,_}, _) ->
+    },
+    {unix, _},
+    _
+) ->
     NCCS = constant(nccs),
 
-    Cc1 = case Cc of
-        <<>> -> <<0:(NCCS*8)>>;
-        _ -> Cc
-    end,
+    Cc1 =
+        case Cc of
+            <<>> -> <<0:(NCCS * 8)>>;
+            _ -> Cc
+        end,
 
     Pad = wordalign(NCCS, 4),
 
     <<
-    ?UINT32(Iflag),
-    ?UINT32(Oflag),
-    ?UINT32(Cflag),
-    ?UINT32(Lflag),
-    Cc1/binary,
-    0:Pad,
-    ?UINT32(Ispeed),
-    ?UINT32(Ospeed)
+        ?UINT32(Iflag),
+        ?UINT32(Oflag),
+        ?UINT32(Cflag),
+        ?UINT32(Lflag),
+        Cc1/binary,
+        0:Pad,
+        ?UINT32(Ispeed),
+        ?UINT32(Ospeed)
     >>.
 
 %%--------------------------------------------------------------------
@@ -643,11 +714,11 @@ termios(#termios{
 -spec progname() -> binary() | string().
 progname() ->
     filename:join([
-            filename:dirname(code:which(?MODULE)),
-            "..",
-            "priv",
-            ?MODULE
-        ]).
+        filename:dirname(code:which(?MODULE)),
+        "..",
+        "priv",
+        ?MODULE
+    ]).
 
 % Return pad size in bits
 wordalign(Offset) ->
@@ -677,9 +748,9 @@ poll(Ref, FD, Total, N, Pid, Acc) ->
         {ok, Buf} when byte_size(Buf) == Total ->
             Pid ! {Ref, {ok, Buf}};
         {ok, Buf} when byte_size(Buf) + Size == Total ->
-            Pid ! {Ref, {ok, iolist_to_binary(lists:reverse([Buf|Acc]))}};
+            Pid ! {Ref, {ok, iolist_to_binary(lists:reverse([Buf | Acc]))}};
         {ok, Buf} ->
-            poll(Ref, FD, Total, N-byte_size(Buf), Pid, [Buf|Acc]);
+            poll(Ref, FD, Total, N - byte_size(Buf), Pid, [Buf | Acc]);
         {error, eagain} ->
             timer:sleep(10),
             poll(Ref, FD, Total, N, Pid, Acc);

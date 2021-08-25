@@ -33,7 +33,8 @@
 
 -define(REQUEST, $1).
 -define(DEV, "/dev/ttyUSB0").
--define(INTERVAL, 1000). % milliseconds
+% milliseconds
+-define(INTERVAL, 1000).
 
 start() ->
     start([]).
@@ -42,21 +43,21 @@ start(Opt) ->
     Dev = proplists:get_value(dev, Opt, ?DEV),
     Interval = proplists:get_value(interval, Opt, ?INTERVAL),
 
-    {ok,FD} = serctl:open(Dev),
+    {ok, FD} = serctl:open(Dev),
 
     Termios = lists:foldl(
         fun(Fun, Acc) -> Fun(Acc) end,
-            serctl:mode(raw),
-            [
-                fun(N) -> serctl:flow(N, false) end,
-                fun(N) -> serctl:ispeed(N, b9600) end,
-                fun(N) -> serctl:ospeed(N, b9600) end
-            ]
-        ),
+        serctl:mode(raw),
+        [
+            fun(N) -> serctl:flow(N, false) end,
+            fun(N) -> serctl:ispeed(N, b9600) end,
+            fun(N) -> serctl:ospeed(N, b9600) end
+        ]
+    ),
 
-   ok = serctl:tcsetattr(FD, tcsanow, Termios),
+    ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
-   poll(FD, Interval).
+    poll(FD, Interval).
 
 poll(FD, Interval) ->
     ok = serctl:write(FD, <<?REQUEST:8>>),
@@ -68,13 +69,13 @@ read(FD) ->
     case serctl:read(FD, 4) of
         {ok, <<2:2/integer-unit:8, N:2/integer-unit:8>>} ->
             error_logger:info_report([
-                    {ldr, N}
-                ]);
+                {ldr, N}
+            ]);
         {error, eagain} ->
             timer:sleep(10),
             read(FD);
         Error ->
             error_logger:error_report([
-                    {error, Error}
-                ])
+                {error, Error}
+            ])
     end.

@@ -33,7 +33,8 @@
 
 -define(REQUEST, $1).
 -define(DEV, "/dev/ttyUSB0").
--define(INTERVAL, 1000). % milliseconds
+% milliseconds
+-define(INTERVAL, 1000).
 
 start() ->
     start([]).
@@ -43,9 +44,9 @@ start(Opt) ->
     Interval = proplists:get_value(interval, Opt, ?INTERVAL),
 
     {ok, FD} = srly:start_link(Dev, [
-            {flow, false},
-            {port_options, [{packet, 2}, binary]}
-        ]),
+        {flow, false},
+        {port_options, [{packet, 2}, binary]}
+    ]),
 
     {ok, _TRef} = timer:apply_interval(Interval, srly, send, [FD, <<?REQUEST:8>>]),
 
@@ -55,11 +56,11 @@ loop(FD) ->
     receive
         {serial, FD, <<N:2/integer-unit:8>>} ->
             error_logger:info_report([
-                    {ldr, N}
-                ]),
+                {ldr, N}
+            ]),
             loop(FD);
         Error ->
             error_logger:error_report([
-                    {error, Error}
-                ])
+                {error, Error}
+            ])
     end.
