@@ -22,7 +22,9 @@ the system C interface.
         Types   Path = iodata() | {fd, FD}
                 FD = resource()
 
-        Opens the serial device (e.g., "/dev/ttyUSB0").
+        Open a serial device.
+
+        A serial device is a character device such as /dev/ttyUSB0.
 
         A previously opened file descriptor can also be used. The fd
         should be opened with the O_NONBLOCK|O_NOCTTY flags.
@@ -31,9 +33,10 @@ the system C interface.
 
         Types   FD = resource()
 
-        Closes the serial device. NOTE: If the process holding open the
-        serial device exits, the file descriptor associated with the
-        device will automatically be closed.
+        Explicitly close a serial device.
+
+        The device is automatically closed if the process holding open
+        the serial device exits.
 
     serctl:read(FD, Size) -> {ok, Data} | {error, posix()}
 
@@ -41,7 +44,9 @@ the system C interface.
                 Size = integer()
                 Data = binary()
 
-        Read from the serial device. Size is an unsigned long.
+        Read from a serial device.
+
+        Size is an unsigned long.
 
     serctl:readx(FD, Size) -> {ok, Data} | {error, posix()}
     serctl:readx(FD, Size, Timeout) -> {ok, Data} | {error, posix()}
@@ -51,8 +56,8 @@ the system C interface.
                 Data = binary()
                 Timeout = infinity | integer()
 
-        Read exactly Size bytes from the serial device. readx/2 will
-        block forever.
+        Read the specified number of bytes from a serial device. readx/2
+        will block forever.
 
         readx/3 accepts a timeout value. The behaviour of readx/3 when
         the timeout is reached is to throw away any buffered data and
@@ -68,10 +73,9 @@ the system C interface.
                 Data = binary()
                 NBytes = long()
 
-        Write data to the serial device.
+        Write data to a serial device.
 
-        In the unlikely case of a successful partial write, the number
-        of bytes written is returned.
+        Partial writes return the number of bytes written.
 
     serctl:ioctl(FD, Request, In) -> {ok, Out} | {error, posix()}
 
@@ -80,7 +84,7 @@ the system C interface.
                 In = binary()
                 Out = binary()
 
-        Perform operations controlling the serial device.
+        Perform operations controlling a serial device.
 
         The In argument is a binary holding the input parameter to the
         device request. The Out parameter will hold the result of the
@@ -103,8 +107,9 @@ converting binaries using serctl:termios/1) include their definition:
         Types   FD = resource()
                 Termios = binary()
 
-        Get the terminal attributes of the serial device. Returns the
-        contents of the system struct termios as a binary.
+        Get the terminal attributes of a serial device.
+
+        Returns the contents of the system struct termios as a binary.
 
     serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix() | unsupported}
 
@@ -114,14 +119,14 @@ converting binaries using serctl:termios/1) include their definition:
                 Option = tcsanow | tcsadrain | tcsaflush | tcsasoft
                 Termios = binary() | #termios{}
 
-        Sets the terminal attributes of the serial device.
+        Sets the terminal attributes of a serial device.
 
         'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
         {error,unsupported} on other platforms.
 
         Warning: the contents of Termios are passed directly to
         tcsettr(3). If the system tcsettr(3) does not perform any
-        validation of the structure, it's possible the Erlang VM will
+        validation of the structure, it is possible the Erlang VM may
         crash.
 
     serctl:cfsetispeed(Termios, Speed) -> Termios1
@@ -130,8 +135,9 @@ converting binaries using serctl:termios/1) include their definition:
                 Speed = integer() | atom()
                 Termios1 = binary()
 
-        Set the input speed of the serial device. See the warning for
-        tcsetattr/2.
+        Set the input speed of a serial device.
+
+        See the warning for tcsetattr/2.
 
         Failure: badarg if Speed is an invalid atom.
 
@@ -141,8 +147,9 @@ converting binaries using serctl:termios/1) include their definition:
                 Speed = integer() | atom()
                 Termios1 = binary()
 
-        Set the input speed of the serial device. See the warning for
-        tcsetattr/2.
+        Set the input speed of the serial device.
+
+        See the warning for tcsetattr/2.
 
         Failure: badarg if Speed is an invalid atom.
 
@@ -150,8 +157,9 @@ converting binaries using serctl:termios/1) include their definition:
 
         Types   FD = resource()
 
-        Returns the file descriptor associated with the NIF resource. The
-        file descriptor can be used with erlang:open_port/2.
+        Returns the file descriptor associated with the NIF resource.
+
+        The file descriptor can be used with erlang:open_port/2.
 
     serctl:constant() -> Constants
     serctl:constant(Attr) -> integer() | undefined
@@ -193,6 +201,8 @@ serctl:tcsetattr/3.
 
         Types   Termios = binary() | #termios{}
                 Bool = true | false
+
+        Get/set serial device flow control.
 
         flow/1 indicates whether flow control is enabled in a serial
         device's terminal attributes. flow/2 returns a termios structure
@@ -254,16 +264,13 @@ serctl:tcsetattr/3.
 
         Types   Speed = 115200 | 19200 | 9600 | ...
 
-        Convenience function returning the constant defined for the baud
-        rate for the platform.
+        Return the constant defined for the baud rate for the platform.
 
     serctl:termios(Termios) -> #termios{} | binary()
 
         Types   Termios = #termios{} | binary()
 
-        Converts between the C struct termios and the Erlang record
-        representation.
-
+        Convert between a C struct termios and an Erlang record.
 
 ## EXAMPLES
 

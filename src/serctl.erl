@@ -1,5 +1,6 @@
-%%% Copyright (c) 2011-2021 Michael Santos <michael.santos@gmail.com>. All
-%%% rights reserved.
+%%% @copyright 2011-2021 Michael Santos <michael.santos@gmail.com>
+
+%%% All rights reserved.
 %%%
 %%% Redistribution and use in source and binary forms, with or without
 %%% modification, are permitted provided that the following conditions
@@ -86,6 +87,12 @@ init() ->
 on_load() ->
     erlang:load_nif(progname(), []).
 
+% @doc Open a serial device
+%
+% A serial device is a character device such as /dev/ttyUSB0.
+%
+% A previously opened file descriptor can also be used. The fd should
+% be opened with the O_NONBLOCK|O_NOCTTY flags.
 -spec open(dev()) -> {'ok', fd()} | errno().
 open({fd, FD}) ->
     fdopen(FD);
@@ -98,14 +105,24 @@ open_nif(_) ->
 fdopen(_) ->
     erlang:nif_error(not_implemented).
 
+% @doc Explicitly close a serial device
+%
+% The device is automatically closed if the process holding open
+% the serial device exits.
 -spec close(fd()) -> {'ok', fd()} | errno().
 close(_) ->
     erlang:nif_error(not_implemented).
 
+% @doc Read from a serial device
+%
+% Size is an unsigned long.
 -spec read(fd(), non_neg_integer()) -> {'ok', binary()} | errno().
 read(_, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Write data to a serial device
+%
+% Partial writes return the number of bytes written.
 -spec write(fd(), iodata()) -> 'ok' | {'ok', non_neg_integer()} | errno().
 write(FD, Buf) ->
     Size = iolist_size(Buf),
@@ -119,10 +136,20 @@ write(FD, Buf) ->
 write_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Get the terminal attributes of a serial device
+%
+% Returns the contents of the system struct termios as a binary.
 -spec tcgetattr(fd()) -> {'ok', binary()} | errno().
 tcgetattr(_) ->
     erlang:nif_error(not_implemented).
 
+% @doc Sets the terminal attributes of a serial device
+%
+% 'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
+% `{error,unsupported}` on other platforms.  Warning: the contents of
+% Termios are passed directly to tcsettr(3). If the system tcsettr(3)
+% does not perform any validation of the structure, it is possible the
+% Erlang VM may crash.
 -spec tcsetattr(fd(), [atom()] | atom() | integer(), termios()) ->
     'ok' | errno() | {'error', 'unsupported'}.
 tcsetattr(FD, Action, Termios) when is_list(Action) ->
@@ -160,6 +187,11 @@ tcsetattr(FD, Action, Termios) ->
 tcsetattr_nif(_, _, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Set the input speed of a serial device
+%
+% See the warning for tcsetattr/2.
+%
+% Failure: badarg if Speed is an invalid atom.
 -spec cfsetispeed(termios(), atom() | integer()) -> binary().
 cfsetispeed(#termios{} = Termios, Speed) ->
     cfsetispeed(termios(Termios), Speed);
@@ -176,6 +208,11 @@ cfsetispeed(Termios, Speed) ->
 cfsetispeed_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Set the input speed of the serial device.
+%
+% See the warning for tcsetattr/2.
+%
+% Failure: badarg if Speed is an invalid atom.
 -spec cfsetospeed(termios(), atom() | integer()) -> binary().
 cfsetospeed(#termios{} = Termios, Speed) ->
     cfsetospeed(termios(Termios), Speed);
@@ -192,10 +229,18 @@ cfsetospeed(Termios, Speed) ->
 cfsetospeed_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Perform operations controlling a serial device
+%
+% The In argument is a binary holding the input parameter to the device
+% request. The Out parameter will hold the result of the request if the
+% ioctl is in/out.
 -spec ioctl(fd(), integer(), binary()) -> {'ok', binary()} | errno().
 ioctl(_, _, _) ->
     erlang:nif_error(not_implemented).
 
+% @doc Map of atoms reprsenting terminal attribute constants to integers
+%
+% Varies across platforms.
 -spec constant() -> proplists:proplist().
 constant() ->
     erlang:nif_error(not_implemented).
@@ -204,6 +249,9 @@ constant() ->
 constant(_) ->
     erlang:nif_error(not_implemented).
 
+% @doc Returns the file descriptor associated with the NIF resource
+%
+% The file descriptor can be used with erlang:open_port/2.
 -spec getfd(fd()) -> integer().
 getfd(_) ->
     erlang:nif_error(not_implemented).
@@ -211,6 +259,16 @@ getfd(_) ->
 %%--------------------------------------------------------------------
 %%% API
 %%--------------------------------------------------------------------
+% @doc Read the specified number of bytes from a serial device
+%
+% readx/2 will block forever.
+%
+% readx/3 accepts a timeout value. The behaviour of readx/3 when the timeout
+% is reached is to throw away any buffered data and return {error, eintr}
+% to the caller, e.g., the caller will not be returned the contents of
+% a partial read. (The justification for this behaviour: the caller has
+% stated they require a fixed number of bytes so the contents of a partial
+% read represents unspecified behaviour.)
 -spec readx(fd(), non_neg_integer()) -> {'ok', binary()} | errno().
 readx(FD, N) ->
     readx(FD, N, infinity).
@@ -228,6 +286,17 @@ readx(FD, N, Timeout) ->
         {error, eintr}
     end.
 
+% @doc Returns an Erlang termios record used for setting the attributes of a serial device
+%
+% For example, to create attributes that can be used to enable hardware
+% flow control on a serial device:
+%
+% ```
+% {ok, FD} = serctl:open("/dev/ttyUSB0"),
+% {ok, Termios} = serctl:tcgetattr(FD),
+% Termios1 = serctl:setflag(Termios, [{cflag, [{crtscts, true}]}]),
+% ok = serctl:tcsetattr(FD, tcsanow, Termios1).
+% '''
 -spec setflag(binary() | #termios{}, proplists:proplist()) -> #termios{}.
 setflag(Termios, Opt) when is_binary(Termios) ->
     setflag(termios(Termios), Opt);
@@ -267,6 +336,9 @@ setflag_1(Val, [{Key, true} | Rest]) ->
 setflag_1(Val, [Key | Rest]) when is_atom(Key) ->
     setflag_1(Val, [{Key, true} | Rest]).
 
+% @doc Returns whether a flag is enabled
+%
+% Opt is one of the atoms returned using serctl:constant/0.
 -spec getflag(<<_:64, _:_*8>> | #termios{}, 'cflag' | 'iflag' | 'lflag' | 'oflag', atom()) ->
     boolean().
 getflag(Termios, Flag, Opt) when is_binary(Termios) ->
@@ -289,6 +361,11 @@ getflag_2(Flag, Opt) ->
         N -> N == Flag band N
     end.
 
+% @doc Get/set serial device flow control
+%
+% flow/1 indicates whether flow control is enabled in a serial device's
+% terminal attributes. flow/2 returns a termios structure that can be used
+% for setting a serial device's flow control.
 -spec flow(<<_:64, _:_*8>> | #termios{}) -> boolean().
 flow(Termios) ->
     getflag(Termios, cflag, crtscts).
@@ -297,6 +374,10 @@ flow(Termios) ->
 flow(Termios, Bool) when Bool == true; Bool == false ->
     setflag(Termios, [{cflag, [{crtscts, Bool}]}]).
 
+% @doc Enable raw mode
+%
+% Returns an Erlang termios record with attributes that can be used to
+% put the serial device into raw mode.
 mode(raw) ->
     #termios{
         cc = lists:foldl(
@@ -323,6 +404,15 @@ mode(raw) ->
                 constant(cread)
     }.
 
+% @doc return the input speed of a serial device
+%
+% Note the speed returned is the constant defined for the system and
+% may differ between platforms.
+%
+% ispeed/2 returns an Erlang termios record that can be used for setting
+% the input speed of the serial device.
+%
+% Failure: badarg if Speed is an invalid atom.
 -spec ispeed(binary() | #termios{}) -> non_neg_integer().
 ispeed(Speed) when is_binary(Speed) ->
     ispeed(termios(Speed));
@@ -342,6 +432,16 @@ ispeed(Termios, Speed) when is_atom(Speed) ->
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetispeed(Termios, Speed)).
 
+
+% @doc return the output speed of a serial device
+%
+% Note the speed returned is the constant defined for the system and
+% may differ between platforms.
+%
+% ospeed/2 returns an Erlang termios record that can be used for setting
+% the output speed of the serial device.
+%
+% Failure: badarg if Speed is an invalid atom.
 -spec ospeed(binary() | #termios{}) -> non_neg_integer().
 ospeed(Speed) when is_binary(Speed) ->
     ospeed(termios(Speed));
@@ -361,69 +461,78 @@ ospeed(Termios, Speed) when is_atom(Speed) ->
 ospeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetospeed(Termios, Speed)).
 
+% @doc Return the constant defined for the baud rate for the platform
 baud(Speed) when is_integer(Speed) ->
     constant(list_to_atom("b" ++ integer_to_list(Speed))).
 
-%% Terminal interface structure
-%%
-%% struct termios is used to control the behaviour of
-%% the serial port. We pass the actual struct between
-%% Erlang and C. Sending junk might cause the C side
-%% to crash if there is a bug in the terminal lib. Using
-%% a NIF resource would help but would require moving
-%% some of the logic from Erlang to C (this would help
-%% with portability though).
-%%
-%% Only the first 4 fields of the struct are standardized.
-%% A simple way of handling portablity would be to parse
-%% the first 4 fields and leave the rest as a binary.
-%%
-%% Linux:
-%% #define NCCS 32
-%% struct termios
-%%   {
-%%           tcflag_t c_iflag;       /* input mode flags */
-%%           tcflag_t c_oflag;       /* output mode flags */
-%%           tcflag_t c_cflag;       /* control mode flags */
-%%           tcflag_t c_lflag;       /* local mode flags */
-%%           cc_t c_line;            /* line discipline */
-%%           cc_t c_cc[NCCS];        /* control characters */
-%%           speed_t c_ispeed;       /* input speed */
-%%           speed_t c_ospeed;       /* output speed */
-%%  #define _HAVE_STRUCT_TERMIOS_C_ISPEED 1
-%%  #define _HAVE_STRUCT_TERMIOS_C_OSPEED 1
-%%  };
-%%
-%% BSD (Max OS X, FreeBSD, OpenBSD, NetBSD, ...):
-%% #define NCCS 20
-%% typedef unsigned int    tcflag_t;
-%% typedef unsigned char   cc_t;
-%% typedef unsigned int    speed_t;
-%%
-%% struct termios {
-%%         tcflag_t    c_iflag;    /* input flags */
-%%         tcflag_t    c_oflag;    /* output flags */
-%%         tcflag_t    c_cflag;    /* control flags */
-%%         tcflag_t    c_lflag;    /* local flags */
-%%         cc_t        c_cc[NCCS]; /* control chars */
-%%         speed_t     c_ispeed;   /* input speed */
-%%         speed_t     c_ospeed;   /* output speed */
-%% };
-%%
-%% On 64-bit Mac OS X:
-%%
-%% typedef unsigned long long   user_tcflag_t;
-%% typedef unsigned long long   user_speed_t;
-%%
-%% Solaris:
-%% #define NCCS    19
-%% struct termios {
-%%         tcflag_t    c_iflag;    /* input modes */
-%%         tcflag_t    c_oflag;    /* output modes */
-%%         tcflag_t    c_cflag;    /* control modes */
-%%         tcflag_t    c_lflag;    /* line discipline modes */
-%%         cc_t        c_cc[NCCS]; /* control chars */
-%% };
+% doc Convert between a C struct termios and an Erlang record
+%
+% Terminal interface structure
+%
+% struct termios is used to control the behaviour of
+% the serial port. We pass the actual struct between
+% Erlang and C. Sending junk might cause the C side
+% to crash if there is a bug in the terminal lib. Using
+% a NIF resource would help but would require moving
+% some of the logic from Erlang to C (this would help
+% with portability though).
+%
+% Only the first 4 fields of the struct are standardized.
+% A simple way of handling portablity would be to parse
+% the first 4 fields and leave the rest as a binary.
+%
+% Linux:
+% ```
+% #define NCCS 32
+% struct termios
+%   {
+%           tcflag_t c_iflag;       /* input mode flags */
+%           tcflag_t c_oflag;       /* output mode flags */
+%           tcflag_t c_cflag;       /* control mode flags */
+%           tcflag_t c_lflag;       /* local mode flags */
+%           cc_t c_line;            /* line discipline */
+%           cc_t c_cc[NCCS];        /* control characters */
+%           speed_t c_ispeed;       /* input speed */
+%           speed_t c_ospeed;       /* output speed */
+%  #define _HAVE_STRUCT_TERMIOS_C_ISPEED 1
+%  #define _HAVE_STRUCT_TERMIOS_C_OSPEED 1
+%  };
+% '''
+%
+% BSD (Max OS X, FreeBSD, OpenBSD, NetBSD, ...):
+% ```
+% #define NCCS 20
+% typedef unsigned int    tcflag_t;
+% typedef unsigned char   cc_t;
+% typedef unsigned int    speed_t;
+%
+% struct termios {
+%         tcflag_t    c_iflag;    /* input flags */
+%         tcflag_t    c_oflag;    /* output flags */
+%         tcflag_t    c_cflag;    /* control flags */
+%         tcflag_t    c_lflag;    /* local flags */
+%         cc_t        c_cc[NCCS]; /* control chars */
+%         speed_t     c_ispeed;   /* input speed */
+%         speed_t     c_ospeed;   /* output speed */
+% };
+% '''
+%
+% On 64-bit Mac OS X:
+%
+% ```
+% typedef unsigned long long   user_tcflag_t;
+% typedef unsigned long long   user_speed_t;
+%
+% Solaris:
+% #define NCCS    19
+% struct termios {
+%         tcflag_t    c_iflag;    /* input modes */
+%         tcflag_t    c_oflag;    /* output modes */
+%         tcflag_t    c_cflag;    /* control modes */
+%         tcflag_t    c_lflag;    /* line discipline modes */
+%         cc_t        c_cc[NCCS]; /* control chars */
+% };
+% '''
 -spec termios(binary() | #termios{}) -> binary() | #termios{}.
 termios(Termios) ->
     termios(Termios, os:type(), erlang:system_info({wordsize, external})).
