@@ -1,6 +1,12 @@
 {application, srly, [
     {description, "Erlang serial interface"},
-    {vsn, "0.6.0"},
+    {vsn, "0.6.1"},
     {registered, [srly]},
-    {applications, [kernel, stdlib]}
+    {applications, [kernel, stdlib]},
+
+    {licenses, ["BSD-3"]},
+    {maintainers, ["Michael Santos"]},
+    {links, [
+        {"Github", "https://github.com/msantos/srly"}
+    ]}
 ]}.
