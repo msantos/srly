@@ -1,4 +1,4 @@
-%%% @copyright 2011-2021 Michael Santos <michael.santos@gmail.com>
+%%% @copyright 2011-2022 Michael Santos <michael.santos@gmail.com>
 
 %%% All rights reserved.
 %%%
@@ -146,7 +146,7 @@ tcgetattr(_) ->
 % @doc Sets the terminal attributes of a serial device
 %
 % 'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
-% `{error,unsupported}` on other platforms.  Warning: the contents of
+% `{error,unsupported}' on other platforms.  Warning: the contents of
 % Termios are passed directly to tcsettr(3). If the system tcsettr(3)
 % does not perform any validation of the structure, it is possible the
 % Erlang VM may crash.
@@ -431,7 +431,6 @@ ispeed(Termios, Speed) when is_atom(Speed) ->
     end;
 ispeed(#termios{} = Termios, Speed) when is_integer(Speed) ->
     termios(cfsetispeed(Termios, Speed)).
-
 
 % @doc return the output speed of a serial device
 %
