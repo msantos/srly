@@ -6,11 +6,9 @@ interface. Data structures used as arguments to the native C functions
 (such as struct termios) are provided as Erlang binaries, allowing
 low level control of the serial device.
 
-Stable version: 0.5.1
-
 ## COMPILING
 
-    make
+    rebar3 compile
 
 ## USAGE
 
