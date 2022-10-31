@@ -233,6 +233,28 @@ static ERL_NIF_TERM nif_tcsetattr(ErlNifEnv *env, int argc,
   return atom_ok;
 }
 
+static ERL_NIF_TERM nif_tcflush(ErlNifEnv *env, int argc,
+                                const ERL_NIF_TERM argv[]) {
+  SRLY_STATE *sp = NULL;
+  ErlNifBinary buf = {0};
+  int queue_selector = 0;
+
+  int err = 0;
+
+  if (!enif_get_resource(env, argv[0], SRLY_STATE_RESOURCE, (void **)&sp))
+    return enif_make_badarg(env);
+
+  if (!enif_get_int(env, argv[1], &queue_selector))
+    return enif_make_badarg(env);
+
+  if (tcflush(sp->fd, queue_selector) < 0) {
+    err = errno;
+    return error_tuple(env, err);
+  }
+
+  return atom_ok;
+}
+
 static ERL_NIF_TERM nif_cfsetispeed(ErlNifEnv *env, int argc,
                                     const ERL_NIF_TERM argv[]) {
   ErlNifBinary buf = {0};
@@ -364,6 +386,7 @@ static ErlNifFunc nif_funcs[] = {{"open_nif", 1, nif_open},
                                  {"write_nif", 2, nif_write},
                                  {"tcgetattr", 1, nif_tcgetattr},
                                  {"tcsetattr_nif", 3, nif_tcsetattr},
+                                 {"tcflush_nif", 2, nif_tcflush},
                                  {"cfsetispeed_nif", 2, nif_cfsetispeed},
                                  {"cfsetospeed_nif", 2, nif_cfsetospeed},
 
