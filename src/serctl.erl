@@ -42,6 +42,7 @@
 
     tcgetattr/1,
     tcsetattr/3,
+    tcflush/2,
 
     cfsetispeed/2,
     cfsetospeed/2,
@@ -185,6 +186,21 @@ tcsetattr(FD, Action, Termios) ->
     tcsetattr_nif(FD, Action, Termios).
 
 tcsetattr_nif(_, _, _) ->
+    erlang:nif_error(not_implemented).
+
+% @doc discards data written but not transmitted or recieved but not read
+%
+% The second argument determines whether to flush input, output, or both
+-spec tcflush(fd(), atom()) -> 'ok' | errno() | {'error', 'unsupported'}.
+tcflush(FD, Discard) when is_atom(Discard) ->
+    case constant(Discard) of
+        undefined ->
+            {error, unsupported};
+        N ->
+            tcflush_nif(FD, N)
+    end.
+
+tcflush_nif(_, _) ->
     erlang:nif_error(not_implemented).
 
 % @doc Set the input speed of a serial device
