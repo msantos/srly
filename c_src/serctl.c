@@ -236,7 +236,6 @@ static ERL_NIF_TERM nif_tcsetattr(ErlNifEnv *env, int argc,
 static ERL_NIF_TERM nif_tcflush(ErlNifEnv *env, int argc,
                                 const ERL_NIF_TERM argv[]) {
   SRLY_STATE *sp = NULL;
-  ErlNifBinary buf = {0};
   int queue_selector = 0;
 
   int err = 0;
