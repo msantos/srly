@@ -250,6 +250,25 @@ cfsetospeed_nif(_, _) ->
 % The In argument is a binary holding the input parameter to the device
 % request. The Out parameter will hold the result of the request if the
 % ioctl is in/out.
+%
+% ioctl/3 can be used for implementing most serial operations.
+%
+% == Examples ==
+%
+% ```
+% -define(TCXONC, 16#540A).
+% tcflow(FD, Action) when is_atom(Action) ->
+%     case serctl:constant(Action) of
+%         undefined ->
+%             {error, unsupported};
+%         N ->
+%             serctl:ioctl(
+%                 fd,
+%                 ?TCFLSH,
+%                 <<N:4/native-unsigned-integer-unit:8>>
+%             )
+%     end.
+% '''
 -spec ioctl(fd(), integer(), binary()) -> {'ok', binary()} | errno().
 ioctl(_, _, _) ->
     erlang:nif_error(not_implemented).
