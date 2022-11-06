@@ -1,18 +1,21 @@
-*.[oa]
+
+.eunit
+*.o
 *.beam
-ebin/
-priv/
-.eunit/
-.rebar/
-ebin/
-priv/
-deps/
+*.plt
+erl_crash.dump
+.concrete/DEV_MODE
+
+# rebar 2.x
+.rebar
+rel/example_project
+ebin/*.beam
+deps
+
+# rebar 3
+.rebar3
+_build/
+_checkouts/
+
 doc/
-.depsolver_plt
-[._]*.s[a-w][a-z]
-[._]s[a-w][a-z]
-*.un~
-Session.vim
-.netrwhist
-*~
-_build
+priv/
