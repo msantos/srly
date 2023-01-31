@@ -1,4 +1,4 @@
-%%% @copyright 2011-2022 Michael Santos <michael.santos@gmail.com>
+%%% @copyright 2011-2023 Michael Santos <michael.santos@gmail.com>
 
 %%% All rights reserved.
 %%%
@@ -188,7 +188,7 @@ tcsetattr(FD, Action, Termios) ->
 tcsetattr_nif(_, _, _) ->
     erlang:nif_error(not_implemented).
 
-% @doc discards data written but not transmitted or recieved but not read
+% @doc discards data written but not transmitted or received but not read
 %
 % The second argument determines whether to flush input, output, or both
 -spec tcflush(fd(), atom()) -> 'ok' | errno() | {'error', 'unsupported'}.
@@ -273,7 +273,7 @@ cfsetospeed_nif(_, _) ->
 ioctl(_, _, _) ->
     erlang:nif_error(not_implemented).
 
-% @doc Map of atoms reprsenting terminal attribute constants to integers
+% @doc Map of atoms representing terminal attribute constants to integers
 %
 % Varies across platforms.
 -spec constant() -> proplists:proplist().

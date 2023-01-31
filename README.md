@@ -180,7 +180,7 @@ converting binaries using serctl:termios/1) include their definition:
                 | vstart | vswtc | vmin | vtime | veof | vkill | verase | vquit
                 | vintr | nccs
 
-        Map of atoms reprsenting terminal attribute constants to
+        Map of atoms representing terminal attribute constants to
         integers. Varies across platforms.
 
 
@@ -304,7 +304,7 @@ serctl:tcsetattr/3.
         TIOCM_DTR = serctl:constant(tiocm_dtr),
         TIOCM_RTS = serctl:constant(tiocm_rts),
 
-        % Get the currrent device settings
+        % Get the current device settings
         {ok, <<Ctl:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
             FD,
             TIOCMGET,
