@@ -8,86 +8,89 @@ low level control of the serial device.
 
 ## COMPILING
 
-    rebar3 compile
+```
+rebar3 compile
+```
 
 ## USAGE
 
-_serctl_ is the interface to the native system C libraries and follows
+*serctl* is the interface to the native system C libraries and follows
 the system C interface.
 
-    serctl:open(Path) -> {ok, FD} | {error, posix()}
+```
+serctl:open(Path) -> {ok, FD} | {error, posix()}
 
-        Types   Path = iodata() | {fd, FD}
-                FD = resource()
+    Types   Path = iodata() | {fd, FD}
+            FD = resource()
 
-        Open a serial device.
+    Open a serial device.
 
-        A serial device is a character device such as /dev/ttyUSB0.
+    A serial device is a character device such as /dev/ttyUSB0.
 
-        A previously opened file descriptor can also be used. The fd
-        should be opened with the O_NONBLOCK|O_NOCTTY flags.
+    A previously opened file descriptor can also be used. The fd
+    should be opened with the O_NONBLOCK|O_NOCTTY flags.
 
-    serctl:close(FD) -> ok | {error, posix()}
+serctl:close(FD) -> ok | {error, posix()}
 
-        Types   FD = resource()
+    Types   FD = resource()
 
-        Explicitly close a serial device.
+    Explicitly close a serial device.
 
-        The device is automatically closed if the process holding open
-        the serial device exits.
+    The device is automatically closed if the process holding open
+    the serial device exits.
 
-    serctl:read(FD, Size) -> {ok, Data} | {error, posix()}
+serctl:read(FD, Size) -> {ok, Data} | {error, posix()}
 
-        Types   FD = resource()
-                Size = integer()
-                Data = binary()
+    Types   FD = resource()
+            Size = integer()
+            Data = binary()
 
-        Read from a serial device.
+    Read from a serial device.
 
-        Size is an unsigned long.
+    Size is an unsigned long.
 
-    serctl:readx(FD, Size) -> {ok, Data} | {error, posix()}
-    serctl:readx(FD, Size, Timeout) -> {ok, Data} | {error, posix()}
+serctl:readx(FD, Size) -> {ok, Data} | {error, posix()}
+serctl:readx(FD, Size, Timeout) -> {ok, Data} | {error, posix()}
 
-        Types   FD = resource()
-                Size = integer()
-                Data = binary()
-                Timeout = infinity | integer()
+    Types   FD = resource()
+            Size = integer()
+            Data = binary()
+            Timeout = infinity | integer()
 
-        Read the specified number of bytes from a serial device. readx/2
-        will block forever.
+    Read the specified number of bytes from a serial device. readx/2
+    will block forever.
 
-        readx/3 accepts a timeout value. The behaviour of readx/3 when
-        the timeout is reached is to throw away any buffered data and
-        return {error, eintr} to the caller, e.g., the caller will not
-        be returned the contents of a partial read. (The justification
-        for this behaviour: the caller has stated they require a fixed
-        number of bytes so the contents of a partial read represents
-        unspecified behaviour.)
+    readx/3 accepts a timeout value. The behaviour of readx/3 when
+    the timeout is reached is to throw away any buffered data and
+    return {error, eintr} to the caller, e.g., the caller will not
+    be returned the contents of a partial read. (The justification
+    for this behaviour: the caller has stated they require a fixed
+    number of bytes so the contents of a partial read represents
+    unspecified behaviour.)
 
-    serctl:write(FD, Data) -> ok | {ok, NBytes} | {error, posix()}
+serctl:write(FD, Data) -> ok | {ok, NBytes} | {error, posix()}
 
-        Types   FD = resource()
-                Data = binary()
-                NBytes = long()
+    Types   FD = resource()
+            Data = binary()
+            NBytes = long()
 
-        Write data to a serial device.
+    Write data to a serial device.
 
-        Partial writes return the number of bytes written.
+    Partial writes return the number of bytes written.
 
-    serctl:ioctl(FD, Request, In) -> {ok, Out} | {error, posix()}
+serctl:ioctl(FD, Request, In) -> {ok, Out} | {error, posix()}
 
-        Types   FD = resource()
-                Request = ulong()
-                In = binary()
-                Out = binary()
+    Types   FD = resource()
+            Request = ulong()
+            In = binary()
+            Out = binary()
 
-        Perform operations controlling a serial device.
+    Perform operations controlling a serial device.
 
-        The In argument is a binary holding the input parameter to the
-        device request. The Out parameter will hold the result of the
-        request if the ioctl is in/out.
-
+    The In argument is a binary holding the input parameter to the
+    device request. The Out parameter will hold the result of the
+    request if the ioctl is in/out.
+```
 
 The low level interface follows the C library (see tcgetattr(3),
 tcsetattr(3), cfsetispeed(3) and cfsetospeed(3) for details). For
@@ -97,92 +100,93 @@ integers and Erlang records can be used as arguments instead of binaries.
 To use Erlang records to represent the C struct termios (e.g., when
 converting binaries using serctl:termios/1) include their definition:
 
-    -include("serctl.hrl").
+```
+-include("serctl.hrl").
 
 
-    serctl:tcgetattr(FD) -> {ok, Termios} | {error, posix()}
+serctl:tcgetattr(FD) -> {ok, Termios} | {error, posix()}
 
-        Types   FD = resource()
-                Termios = binary()
+    Types   FD = resource()
+            Termios = binary()
 
-        Get the terminal attributes of a serial device.
+    Get the terminal attributes of a serial device.
 
-        Returns the contents of the system struct termios as a binary.
+    Returns the contents of the system struct termios as a binary.
 
-    serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix() | unsupported}
+serctl:tcsetattr(FD, Action, Termios) -> ok | {error, posix() | unsupported}
 
-        Types   FD = resource()
-                Action = integer() | Option | Options
-                Options = [Option]
-                Option = tcsanow | tcsadrain | tcsaflush | tcsasoft
-                Termios = binary() | #termios{}
+    Types   FD = resource()
+            Action = integer() | Option | Options
+            Options = [Option]
+            Option = tcsanow | tcsadrain | tcsaflush | tcsasoft
+            Termios = binary() | #termios{}
 
-        Sets the terminal attributes of a serial device.
+    Sets the terminal attributes of a serial device.
 
-        'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
-        {error,unsupported} on other platforms.
+    'tcsasoft' is a non-portable, BSD action. tcsetattr/3 will return
+    {error,unsupported} on other platforms.
 
-        Warning: the contents of Termios are passed directly to
-        tcsettr(3). If the system tcsettr(3) does not perform any
-        validation of the structure, it is possible the Erlang VM may
-        crash.
+    Warning: the contents of Termios are passed directly to
+    tcsettr(3). If the system tcsettr(3) does not perform any
+    validation of the structure, it is possible the Erlang VM may
+    crash.
 
-    serctl:cfsetispeed(Termios, Speed) -> Termios1
+serctl:cfsetispeed(Termios, Speed) -> Termios1
 
-        Types   Termios = binary() | #termios{}
-                Speed = integer() | atom()
-                Termios1 = binary()
+    Types   Termios = binary() | #termios{}
+            Speed = integer() | atom()
+            Termios1 = binary()
 
-        Set the input speed of a serial device.
+    Set the input speed of a serial device.
 
-        See the warning for tcsetattr/2.
+    See the warning for tcsetattr/2.
 
-        Failure: badarg if Speed is an invalid atom.
+    Failure: badarg if Speed is an invalid atom.
 
-    serctl:cfsetospeed(Termios, Speed) -> Termios1
+serctl:cfsetospeed(Termios, Speed) -> Termios1
 
-        Types   Termios = binary() | #termios{}
-                Speed = integer() | atom()
-                Termios1 = binary()
+    Types   Termios = binary() | #termios{}
+            Speed = integer() | atom()
+            Termios1 = binary()
 
-        Set the input speed of the serial device.
+    Set the input speed of the serial device.
 
-        See the warning for tcsetattr/2.
+    See the warning for tcsetattr/2.
 
-        Failure: badarg if Speed is an invalid atom.
+    Failure: badarg if Speed is an invalid atom.
 
-    serctl:getfd(FD) -> integer()
+serctl:getfd(FD) -> integer()
 
-        Types   FD = resource()
+    Types   FD = resource()
 
-        Returns the file descriptor associated with the NIF resource.
+    Returns the file descriptor associated with the NIF resource.
 
-        The file descriptor can be used with erlang:open_port/2.
+    The file descriptor can be used with erlang:open_port/2.
 
-    serctl:constant() -> Constants
-    serctl:constant(Attr) -> integer() | undefined
+serctl:constant() -> Constants
+serctl:constant(Attr) -> integer() | undefined
 
-        Types   Constants = [{Attr, integer()}]
-                Attr = tiocm_rts | tiocm_dtr | tiocmset | tiocmget | tiocmbis
-                | tiocmbic | tcsaflush | tcsadrain | tcsanow | tcioflush
-                | tcoflush | tciflush | tcion | tcioff | tcoon | tcooff
-                | iexten | tostop | noflsh | echonl | echoke | echok | echoe
-                | echo | icanon | isig | crtscts | b1152000 | b1000000
-                | b921600 | b576000 | b500000 | b460800 | b230400 | b115200
-                | b57600 | clocal | hupcl | parodd | parenb | cread | cstopb
-                | cs8 | cs7 | cs6 | cs5 | csize | b38400 | b19200 | b9600
-                | b4800 | b2400 | b1800 | b1200 | b600 | b300 | b200 | b150
-                | b134 | b110 | b75 | b50 | b0 | ofdel | ofill | onlret
-                | onocr | ocrnl | onlcr | olcuc | opost | iutf8 | imaxbel
-                | ixoff | ixany | ixon | iuclc | icrnl | igncr | inlcr
-                | istrip | inpck | parmrk | ignpar | brkint | ignbrk | veol2
-                | vlnext | vwerase | vdiscard | vreprint | veol | vsusp | vstop
-                | vstart | vswtc | vmin | vtime | veof | vkill | verase | vquit
-                | vintr | nccs
+    Types   Constants = [{Attr, integer()}]
+            Attr = tiocm_rts | tiocm_dtr | tiocmset | tiocmget | tiocmbis
+            | tiocmbic | tcsaflush | tcsadrain | tcsanow | tcioflush
+            | tcoflush | tciflush | tcion | tcioff | tcoon | tcooff
+            | iexten | tostop | noflsh | echonl | echoke | echok | echoe
+            | echo | icanon | isig | crtscts | b1152000 | b1000000
+            | b921600 | b576000 | b500000 | b460800 | b230400 | b115200
+            | b57600 | clocal | hupcl | parodd | parenb | cread | cstopb
+            | cs8 | cs7 | cs6 | cs5 | csize | b38400 | b19200 | b9600
+            | b4800 | b2400 | b1800 | b1200 | b600 | b300 | b200 | b150
+            | b134 | b110 | b75 | b50 | b0 | ofdel | ofill | onlret
+            | onocr | ocrnl | onlcr | olcuc | opost | iutf8 | imaxbel
+            | ixoff | ixany | ixon | iuclc | icrnl | igncr | inlcr
+            | istrip | inpck | parmrk | ignpar | brkint | ignbrk | veol2
+            | vlnext | vwerase | vdiscard | vreprint | veol | vsusp | vstop
+            | vstart | vswtc | vmin | vtime | veof | vkill | verase | vquit
+            | vintr | nccs
 
-        Map of atoms representing terminal attribute constants to
-        integers. Varies across platforms.
-
+    Map of atoms representing terminal attribute constants to
+    integers. Varies across platforms.
+```
 
 serctl has a higher level interface for manipulating the C data structures
 that takes care of portability. The structures are represented as Erlang
@@ -194,151 +198,156 @@ format based on a runtime platform check).
 To modify the serial device, the attributes must be written out using
 serctl:tcsetattr/3.
 
-    serctl:flow(Termios) -> true | false
-    serctl:flow(Termios, Bool) -> #termios{}
+```
+serctl:flow(Termios) -> true | false
+serctl:flow(Termios, Bool) -> #termios{}
 
-        Types   Termios = binary() | #termios{}
-                Bool = true | false
+    Types   Termios = binary() | #termios{}
+            Bool = true | false
 
-        Get/set serial device flow control.
+    Get/set serial device flow control.
 
-        flow/1 indicates whether flow control is enabled in a serial
-        device's terminal attributes. flow/2 returns a termios structure
-        that can be used for setting a serial device's flow control.
+    flow/1 indicates whether flow control is enabled in a serial
+    device's terminal attributes. flow/2 returns a termios structure
+    that can be used for setting a serial device's flow control.
 
-    serctl:mode(Mode) -> #termios{}
+serctl:mode(Mode) -> #termios{}
 
-        Types   Mode = raw
+    Types   Mode = raw
 
-        Returns an Erlang termios record with attributes that can be
-        used to put the serial device into raw mode.
+    Returns an Erlang termios record with attributes that can be
+    used to put the serial device into raw mode.
 
-    serctl:getflag(Termios, Flag, Opt) -> true | false
+serctl:getflag(Termios, Flag, Opt) -> true | false
 
-        Types   Termios = binary() | #termios{}
-                Flag = cflag | lflag | iflag | oflag
-                Opt = atom()
+    Types   Termios = binary() | #termios{}
+            Flag = cflag | lflag | iflag | oflag
+            Opt = atom()
 
-        Returns whether a flag is enabled. Opt is one of the atoms
-        returned using serctl:constant/0.
+    Returns whether a flag is enabled. Opt is one of the atoms
+    returned using serctl:constant/0.
 
-    serctl:setflag(Termios, Opt) -> #termios{}
+serctl:setflag(Termios, Opt) -> #termios{}
 
-        Types   Termios = #termios{}
-                Opt = [Param]
-                Param = {Flag, [Val]}
-                Flag = cflag | lflag | iflag | oflag
-                Val = {atom(), Bool}
-                Bool = true | false
+    Types   Termios = #termios{}
+            Opt = [Param]
+            Param = {Flag, [Val]}
+            Flag = cflag | lflag | iflag | oflag
+            Val = {atom(), Bool}
+            Bool = true | false
 
-        Returns an Erlang termios record which can be used for setting
-        the attributes of a serial device. For example, to create
-        attributes that can be used to enable hardware flow control on
-        a serial device:
+    Returns an Erlang termios record which can be used for setting
+    the attributes of a serial device. For example, to create
+    attributes that can be used to enable hardware flow control on
+    a serial device:
 
-            {ok, FD} = serctl:open("/dev/ttyUSB0"),
-            {ok, Termios} = serctl:tcgetattr(FD),
-            Termios1 = serctl:setflag(Termios, [{cflag, [{crtscts, true}]}]),
-            ok = serctl:tcsetattr(FD, tcsanow, Termios1).
+        {ok, FD} = serctl:open("/dev/ttyUSB0"),
+        {ok, Termios} = serctl:tcgetattr(FD),
+        Termios1 = serctl:setflag(Termios, [{cflag, [{crtscts, true}]}]),
+        ok = serctl:tcsetattr(FD, tcsanow, Termios1).
 
-    serctl:ispeed(Termios) -> integer()
-    serctl:ispeed(Termios, Speed) -> #termios{} | binary()
-    serctl:ospeed(Termios) -> integer()
-    serctl:ospeed(Termios, Speed) -> #termios{} | binary()
+serctl:ispeed(Termios) -> integer()
+serctl:ispeed(Termios, Speed) -> #termios{} | binary()
+serctl:ospeed(Termios) -> integer()
+serctl:ospeed(Termios, Speed) -> #termios{} | binary()
 
-        Types   Termios = #termios{}
-                Speed = integer() | atom()
+    Types   Termios = #termios{}
+            Speed = integer() | atom()
 
-        ispeed/1 and ospeed/1 return the input and output speed of the
-        serial device. Note the speed returned is the constant defined
-        for the system and may differ between platforms.
+    ispeed/1 and ospeed/1 return the input and output speed of the
+    serial device. Note the speed returned is the constant defined
+    for the system and may differ between platforms.
 
-        ispeed/2 and ospeed/2 return an Erlang termios record that can be
-        used for setting the input and output speed of the serial device.
+    ispeed/2 and ospeed/2 return an Erlang termios record that can be
+    used for setting the input and output speed of the serial device.
 
-        Failure: badarg if Speed is an invalid atom.
+    Failure: badarg if Speed is an invalid atom.
 
-    serctl:baud(Speed) -> integer()
+serctl:baud(Speed) -> integer()
 
-        Types   Speed = 115200 | 19200 | 9600 | ...
+    Types   Speed = 115200 | 19200 | 9600 | ...
 
-        Return the constant defined for the baud rate for the platform.
+    Return the constant defined for the baud rate for the platform.
 
-    serctl:termios(Termios) -> #termios{} | binary()
+serctl:termios(Termios) -> #termios{} | binary()
 
-        Types   Termios = #termios{} | binary()
+    Types   Termios = #termios{} | binary()
 
-        Convert between a C struct termios and an Erlang record.
+    Convert between a C struct termios and an Erlang record.
+```
 
 ## EXAMPLES
 
 * Connect to an Arduino at 9600
 
-        % Open the serial device
-        {ok, FD} = serctl:open("/dev/ttyUSB0"),
+  ```
+    % Open the serial device
+    {ok, FD} = serctl:open("/dev/ttyUSB0"),
 
-        % Set the terminal attributes to:
-        %   raw, no hardware flow control, 9600
-        Termios = lists:foldl(
-            fun(Fun, Acc) -> Fun(Acc) end,
-            serctl:mode(raw),
-            [
-                fun(N) -> serctl:flow(N, false) end,
-                fun(N) -> serctl:ispeed(N, b9600) end,
-                fun(N) -> serctl:ospeed(N, b9600) end
-            ]
-        ),
+    % Set the terminal attributes to:
+    %   raw, no hardware flow control, 9600
+    Termios = lists:foldl(
+        fun(Fun, Acc) -> Fun(Acc) end,
+        serctl:mode(raw),
+        [
+            fun(N) -> serctl:flow(N, false) end,
+            fun(N) -> serctl:ispeed(N, b9600) end,
+            fun(N) -> serctl:ospeed(N, b9600) end
+        ]
+    ),
 
-        ok = serctl:tcsetattr(FD, tcsanow, Termios),
+    ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
-        % Write 1 byte to the arduino
-        ok = serctl:write(FD, <<1:8>>),
+    % Write 1 byte to the arduino
+    ok = serctl:write(FD, <<1:8>>),
 
-        % Read 2 bytes from the arduino (little-endian integer)
-        {ok, <<Data:2/little-integer-unit:8>>} = serctl:read(FD, 2).
+    % Read 2 bytes from the arduino (little-endian integer)
+    {ok, <<Data:2/little-integer-unit:8>>} = serctl:read(FD, 2).
+  ```
 
 * Resetting DTR/RTS
 
-        TIOCMGET = serctl:constant(tiocmget),
-        TIOCMSET = serctl:constant(tiocmset),
-        TIOCM_DTR = serctl:constant(tiocm_dtr),
-        TIOCM_RTS = serctl:constant(tiocm_rts),
+  ```
+    TIOCMGET = serctl:constant(tiocmget),
+    TIOCMSET = serctl:constant(tiocmset),
+    TIOCM_DTR = serctl:constant(tiocm_dtr),
+    TIOCM_RTS = serctl:constant(tiocm_rts),
 
-        % Get the current device settings
-        {ok, <<Ctl:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
-            FD,
-            TIOCMGET,
-            <<0:32>>
-        ),
+    % Get the current device settings
+    {ok, <<Ctl:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
+        FD,
+        TIOCMGET,
+        <<0:32>>
+    ),
 
-        Off = Ctl band bnot ( TIOCM_DTR bor TIOCM_RTS ),
+    Off = Ctl band bnot ( TIOCM_DTR bor TIOCM_RTS ),
 
-        {ok, <<Ctl1:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
-            FD,
-            TIOCMSET,
-            <<Off:4/native-unsigned-integer-unit:8>>
-        ),
+    {ok, <<Ctl1:4/native-unsigned-integer-unit:8>>} = serctl:ioctl(
+        FD,
+        TIOCMSET,
+        <<Off:4/native-unsigned-integer-unit:8>>
+    ),
 
-        On = Ctl1 bor ( TIOCM_DTR bor TIOCM_RTS ),
+    On = Ctl1 bor ( TIOCM_DTR bor TIOCM_RTS ),
 
-        serctl:ioctl(
-            FD,
-            TIOCMSET,
-            <<On:4/native-unsigned-integer-unit:8>>
-        ).
+    serctl:ioctl(
+        FD,
+        TIOCMSET,
+        <<On:4/native-unsigned-integer-unit:8>>
+    ).
+  ```
 
 * See the examples directory. The code here is adapted from:
 
-    http://blog.listincomprehension.com/2010/04/accessing-arduino-from-erlang.html
+  http://blog.listincomprehension.com/2010/04/accessing-arduino-from-erlang.html
 
-    * examples/strobe
+  * examples/strobe
 
-        Serially turn on/off a row of LEDs.
+    Serially turn on/off a row of LEDs.
 
-    * examples/ldr
+  * examples/ldr
 
-        Read values from an LDR.
-
+    Read values from an LDR.
 
 ## TODO
 
